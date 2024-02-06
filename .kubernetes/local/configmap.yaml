@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: &app-name go-payment-cm
+  namespace: test-a
+  labels:
+    app: *app-name
+data:
+  API_VERSION: "1.1"
+  POD_NAME: "go-payment"
+  PORT: "5007"
+  DB_HOST: "host.docker.internal"
+  DB_PORT: "5432"
+  DB_NAME: "postgres"
+  DB_SCHEMA: "public"
+  DB_DRIVER: "postgres"
+  NO_AZ: "true"
+  TLS: "true"

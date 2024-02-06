@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: &app-name go-payment-cm
+  namespace: test-a
+  labels:
+    app: *app-name
+data:
+  API_VERSION: "1.2"
+  POD_NAME: "go-payment"
+  PORT: "5007"
+  #DB_HOST: "db-arch.couoacqalfwt.us-east-2.rds.amazonaws.com"
+  DB_HOST: "rds-proxy-db-arch.proxy-couoacqalfwt.us-east-2.rds.amazonaws.com"
+  DB_PORT: "5432"
+  DB_NAME: "postgres"
+  DB_SCHEMA: "public"
+  DB_DRIVER: "postgres"
+  NO_AZ: "true"
+  TLS: "false"

@@ -6,6 +6,10 @@ CRUD a payment
 
 ## Diagram
 
+go-payment (get:/get) == (REST) ==> go-account (service.GetAccount)
+go-payment (get:/fundBalanceAccount) == (REST) ==> go-account (service.GetAccount)
+go-payment ==> Repository
+
 ## database
 
     CREATE TABLE payment (
