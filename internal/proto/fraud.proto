@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package fraud;
+
+message PodInfo {
+    string ip_address  = 1;
+    string pod_name   = 2;
+    string availability_zone   = 3;
+    string grpc_host   = 4;
+}
+
+message PodInfoRequest {
+}
+
+message PodInfoResponse {
+    PodInfo podInfo = 1;
+}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN         = 0;
+    SERVING         = 1;
+    NOT_SERVING     = 2;
+    SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
+  }
+  ServingStatus status = 1;
+}
+
+service Health {
+    rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+    rpc Watch(HealthCheckRequest) returns (stream HealthCheckResponse);
+}
+
+service FraudService  {
+    rpc GetPodInfo(PodInfoRequest) returns (PodInfoResponse) {};
+}

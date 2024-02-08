@@ -18,7 +18,8 @@ import(
 	"github.com/go-payment/internal/service"
 	"github.com/go-payment/internal/adapter/restapi"
 	"github.com/go-payment/internal/handler"
-	
+	"github.com/go-payment/internal/adapter/grpc"
+
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 )
 
@@ -46,6 +47,9 @@ func getEnv() {
 	if os.Getenv("PORT") !=  "" {
 		intVar, _ := strconv.Atoi(os.Getenv("PORT"))
 		server.Port = intVar
+	}
+	if os.Getenv("GRPC_HOST") !=  "" {	
+		infoPod.GrpcHost = os.Getenv("GRPC_HOST")
 	}
 
 	if os.Getenv("DB_HOST") !=  "" {
@@ -157,32 +161,36 @@ func main(){
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration( server.ReadTimeout ) * time.Second)
 	defer cancel()
 
-		// Open Database
-		count := 1
-		var err error
-		for {
-			dataBaseHelper, err = postgre.NewDatabaseHelper(ctx, envDB)
-			if err != nil {
-				if count < 3 {
-					log.Error().Err(err).Msg("Erro na abertura do Database")
-				} else {
-					log.Error().Err(err).Msg("ERRO FATAL na abertura do Database aborting")
-					panic(err)
-				}
-				time.Sleep(3 * time.Second)
-				count = count + 1
-				continue
+	// Open Database
+	count := 1
+	var err error
+	for {
+		dataBaseHelper, err = postgre.NewDatabaseHelper(ctx, envDB)
+		if err != nil {
+			if count < 3 {
+				log.Error().Err(err).Msg("Erro na abertura do Database")
+			} else {
+				log.Error().Err(err).Msg("ERRO FATAL na abertura do Database aborting")
+				panic(err)
 			}
-			break
+			time.Sleep(3 * time.Second)
+			count = count + 1
+			continue
 		}
+		break
+	}
 
+	grpcClient, err  := grpc.StartGrpcClient(infoPod.GrpcHost)
+	if err != nil {
+		log.Error().Err(err).Msg("Erro connect to grpc server")
+	}
 
 	restapi	:= restapi.NewRestApi(serverUrlDomain, xApigwId)
 
 	httpAppServerConfig.Server = server
 	repoDB = postgre.NewWorkerRepository(dataBaseHelper)
 
-	workerService := service.NewWorkerService(&repoDB, restapi)
+	workerService := service.NewWorkerService(&repoDB, restapi, &grpcClient)
 	httpWorkerAdapter := handler.NewHttpWorkerAdapter(workerService)
 
 	httpAppServerConfig.InfoPod = &infoPod

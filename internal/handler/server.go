@@ -47,7 +47,6 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	childLogger.Info().Msg("StartHttpAppServer")
 		
 	myRouter := mux.NewRouter().StrictSlash(true)
-	//myRouter.Use(MiddleWareHandlerHeader)
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")
@@ -71,20 +70,28 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 
 	payPayment := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	payPayment.Handle("/payment/pay", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "transfer:", h.httpAppServer.InfoPod.AvailabilityZone, ".add")), 
+						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".add")), 
 						http.HandlerFunc(httpWorkerAdapter.Pay),
 						),
-	)
+					)
 	payPayment.Use(httpWorkerAdapter.DecoratorDB)
 
 	getPayment := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
 	getPayment.Handle("/payment/get/{id}", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "transfer:", h.httpAppServer.InfoPod.AvailabilityZone, ".get")),
+						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".get")),
 						http.HandlerFunc(httpWorkerAdapter.Get),
 						),
-	)
+					)
 	getPayment.Use(MiddleWareHandlerHeader)
 	
+	podGrpc := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
+    podGrpc.Handle("/podGrpc", 
+					xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".get")),
+					http.HandlerFunc(httpWorkerAdapter.GetPodGrpc),
+					),
+				)
+	podGrpc.Use(MiddleWareHandlerHeader)
+
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpAppServer.Server.Port),      	
 		Handler:      myRouter,                	          

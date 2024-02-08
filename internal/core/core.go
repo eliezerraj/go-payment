@@ -23,6 +23,7 @@ type InfoPod struct {
 	IPAddress			string `json:"ip_address"`
 	AvailabilityZone 	string `json:"availabilityZone"`
 	Database			*DatabaseRDS
+	GrpcHost			string `json:"grpc_host"`
 }
 
 type Server struct {

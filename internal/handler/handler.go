@@ -153,3 +153,20 @@ func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(rw).Encode(res)
 	return
 }
+
+func (h *HttpWorkerAdapter) GetPodGrpc(rw http.ResponseWriter, req *http.Request) {
+	childLogger.Debug().Msg("GetPodGrpc")
+
+	res, err := h.workerService.GetInfoPodGrpc(req.Context())
+	if err != nil {
+		switch err {
+		default:
+			rw.WriteHeader(500)
+			json.NewEncoder(rw).Encode(err.Error())
+			return
+		}
+	}
+
+	json.NewEncoder(rw).Encode(res)
+	return
+}

@@ -14,6 +14,7 @@ import (
 	"github.com/go-payment/internal/adapter/restapi"
 	"github.com/go-payment/internal/repository/postgre"
 	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/go-payment/internal/adapter/grpc"
 
 )
 
@@ -22,15 +23,18 @@ var childLogger = log.With().Str("service", "service").Logger()
 type WorkerService struct {
 	workerRepository 		*postgre.WorkerRepository
 	restapi					*restapi.RestApiSConfig
+	grpcClient 				*grpc.GrpcClient
 }
 
 func NewWorkerService(	workerRepository 	*postgre.WorkerRepository,
-						restapi				*restapi.RestApiSConfig) *WorkerService{
+						restapi				*restapi.RestApiSConfig,
+						grpcClient 			*grpc.GrpcClient) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
 		workerRepository:	workerRepository,
 		restapi:			restapi,
+		grpcClient: 		grpcClient,
 	}
 }
 

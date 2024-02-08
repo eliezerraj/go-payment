@@ -7,8 +7,8 @@ version: 0.2
 env:
   variables:
     AWS_DEFAULT_REGION: us-east-2
-    EKS_CLUSTER_NAME: 908671954593
-    EKS_KUBECTL_ROLE_ARN: latest
+    EKS_CLUSTER_NAME: arch-eks-02
+    EKS_KUBECTL_ROLE_ARN: arn:aws:iam::992382474575:role/eks-admin-Eliezer
 
 phases: 
   install: 
@@ -48,6 +48,7 @@ phases:
       - kubectl get deployments 
        
       - echo Start manifest deployment..
+      - kubectl apply -f .kubernetes/aws/ns.yaml 
       - kubectl apply -f .kubernetes/aws/service-account.yaml 
       - kubectl apply -f .kubernetes/aws/configmap.yaml
       - kubectl apply -f .kubernetes/aws/secret_store_service_account.yaml 

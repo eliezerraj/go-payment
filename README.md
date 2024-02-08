@@ -53,3 +53,7 @@ go-payment ==> Repository
         }
         
 + GET  /payment/get/6
+
+## Compile grpc proto
+
+    protoc -I proto proto/fraud.proto --go_out=plugins=grpc:proto
