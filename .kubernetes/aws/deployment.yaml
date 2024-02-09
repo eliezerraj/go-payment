@@ -19,9 +19,6 @@ spec:
     spec:
       serviceAccountName: sa-go-payment
       volumes:
-      - name: volume-cert
-        secret:
-          secretName: es-certs-go-payment
       - name: volume-secret
         secret:
           secretName: es-rds-arch-secret-go-payment
@@ -43,8 +40,6 @@ spec:
             name: volume-secret
             readOnly: true
           - mountPath: "/var/pod/cert"
-            name: volume-cert
-            readOnly: true
         resources:
            requests:
              cpu: 100m
