@@ -8,6 +8,7 @@ import (
 	_ "github.com/lib/pq"
 	"database/sql"
 
+	"github.com/go-payment/internal/erro"
 	"github.com/go-payment/internal/core"
 	"github.com/aws/aws-xray-sdk-go/xray"
 
@@ -59,10 +60,11 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 			childLogger.Error().Err(err).Msg("Scan statement")
 			return nil, errors.New(err.Error())
         }
+		return &result_query , nil
 	}
 
 	defer rows.Close()
-	return &result_query , nil
+	return nil, erro.ErrNotFound
 }
 
 func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Payment) (*core.Payment, error){

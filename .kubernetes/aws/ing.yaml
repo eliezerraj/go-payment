@@ -11,7 +11,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: go-payment.architecture.caradhras.io
+    - host: go-payment.architecturedev.caradhras.io
       http:
         paths:
         - path: /

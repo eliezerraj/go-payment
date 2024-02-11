@@ -114,6 +114,10 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 	res, err := h.workerService.Get(req.Context(), payment)
 	if err != nil {
 		switch err {
+		case erro.ErrNotFound:
+			rw.WriteHeader(404)
+			json.NewEncoder(rw).Encode(err.Error())
+			return
 		default:
 			rw.WriteHeader(500)
 			json.NewEncoder(rw).Encode(err.Error())

@@ -104,7 +104,7 @@ func init(){
 		log.Error().Err(err).Msg("ERRO FATAL recuperacao secret-user")
 		os.Exit(3)
 	}
-	file_pass, err := ioutil.ReadFile("/var/pod/secret/password")
+	file_pass, err := ioutil.ReadFile("/var/pod/secret/pass_aws")
 	if err != nil {
 		log.Error().Err(err).Msg("ERRO FATAL recuperacao secret-pass")
 		os.Exit(3)
