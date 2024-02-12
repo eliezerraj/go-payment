@@ -68,6 +68,8 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Pay")
 
+	childLogger.Debug().Interface(" ====> payment : ", payment).Msg("Pay")
+
 	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Add")
 	defer repospan.End()
 

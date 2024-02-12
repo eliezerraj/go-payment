@@ -97,6 +97,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
     }
 
 	svcspan.AddEvent("Begin Transaction - lock")
+	
 	payment.FkAccountID = account_parsed.ID
 	payment.Status = "PENDING"
 	res, err := s.workerRepository.Add(ctx, tx ,payment)
