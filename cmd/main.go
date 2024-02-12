@@ -33,6 +33,7 @@ var(
 	server					core.Server
 	dataBaseHelper 			postgre.DatabaseHelper
 	repoDB					postgre.WorkerRepository
+	configOTEL				core.ConfigOTEL
 )
 
 func getEnv() {
@@ -80,6 +81,7 @@ func getEnv() {
 	} else {
 		noAZ = true
 	}
+
 }
 
 func init(){
@@ -97,6 +99,13 @@ func init(){
 	server.WriteTimeout = 60
 	server.IdleTimeout = 60
 	server.CtxTimeout = 60
+
+	configOTEL.TimeInterval = 1
+	configOTEL.TimeAliveIncrementer = 1
+	configOTEL.TotalHeapSizeUpperBound = 100
+	configOTEL.ThreadsActiveUpperBound = 10
+	configOTEL.CpuUsageUpperBound = 100
+	configOTEL.SampleAppPorts = []string{}
 
 	// Get Database Secrets
 	file_user, err := ioutil.ReadFile("/var/pod/secret/username")

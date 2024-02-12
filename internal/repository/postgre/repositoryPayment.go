@@ -10,17 +10,15 @@ import (
 
 	"github.com/go-payment/internal/erro"
 	"github.com/go-payment/internal/core"
-	"github.com/aws/aws-xray-sdk-go/xray"
 
+	"go.opentelemetry.io/otel"
 )
 
 func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Get")
 
-	_, root := xray.BeginSubsegment(ctx, "Repository.Get")
-	defer func() {
-		root.Close(nil)
-	}()
+	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Get")
+	defer repospan.End()
 
 	client:= w.databaseHelper.GetConnection()
 	
@@ -70,11 +68,9 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Pay")
 
-	_, root := xray.BeginSubsegment(ctx, "Repository.Add")
-	defer func() {
-		root.Close(nil)
-	}()
-	
+	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Add")
+	defer repospan.End()
+
 	stmt, err := tx.Prepare(`INSERT INTO payment ( 	fk_account_id, 
 													card_number,
 													card_type,
@@ -117,10 +113,8 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Paym
 func (w WorkerRepository) Update(ctx context.Context, tx *sql.Tx, payment core.Payment) (int64, error){
 	childLogger.Debug().Msg("Update")
 
-	_, root := xray.BeginSubsegment(ctx, "Repository.Update")
-	defer func() {
-		root.Close(nil)
-	}()
+	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Update")
+	defer repospan.End()
 	
 	stmt, err := tx.Prepare(`update payment
 							set status = $2,

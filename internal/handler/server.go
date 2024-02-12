@@ -9,13 +9,19 @@ import (
 	"os/signal"
 	"syscall"
 	"context"
-	"fmt"
 
 	"github.com/gorilla/mux"
 
 	"github.com/go-payment/internal/service"
 	"github.com/go-payment/internal/core"
-	"github.com/aws/aws-xray-sdk-go/xray"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/contrib/propagators/aws/xray"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
 )
 
@@ -46,7 +52,39 @@ func NewHttpAppServer(httpAppServer core.HttpAppServer) HttpServer {
 func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *HttpWorkerAdapter) {
 	childLogger.Info().Msg("StartHttpAppServer")
 		
+	// ---------------------- OTEL ---------------
+	traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure())
+	if err != nil {
+		childLogger.Error().Err(err).Msg("ERRO otlptracegrpc")
+	}
+	idg := xray.NewIDGenerator()
+
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceNameKey.String("go-payment"),
+	)
+
+	tp := sdktrace.NewTracerProvider(
+									sdktrace.WithSampler(sdktrace.AlwaysSample()),
+									sdktrace.WithBatcher(traceExporter),
+									sdktrace.WithResource(res),
+									sdktrace.WithIDGenerator(idg),
+									)
+
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(xray.Propagator{})
+
+	defer func() { 
+		err = tp.Shutdown(ctx)
+		if err != nil{
+			childLogger.Error().Err(err).Msg("Erro closing OTEL tracer !!!")
+		}
+	}()
+	// ----------------------------------
+
 	myRouter := mux.NewRouter().StrictSlash(true)
+	
+	myRouter.Use(otelmux.Middleware("go-payment"))
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")
@@ -70,26 +108,26 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 
 	payPayment := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	payPayment.Handle("/payment/pay", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".add")), 
+						//xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".add")), 
 						http.HandlerFunc(httpWorkerAdapter.Pay),
-						),
+					//	),
 					)
 	payPayment.Use(httpWorkerAdapter.DecoratorDB)
 
 	getPayment := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
 	getPayment.Handle("/payment/get/{id}", 
-						xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".get")),
+						//xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".get")),
 						http.HandlerFunc(httpWorkerAdapter.Get),
-						),
+					//	),
 					)
 	getPayment.Use(MiddleWareHandlerHeader)
 	
 	podGrpc := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     podGrpc.Handle("/podGrpc", 
-					xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".get")),
+				//	xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".get")),
 					http.HandlerFunc(httpWorkerAdapter.GetPodGrpc),
-					),
-				)
+				//	),
+			)
 	podGrpc.Use(MiddleWareHandlerHeader)
 
 	srv := http.Server{
@@ -117,5 +155,6 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 		childLogger.Error().Err(err).Msg("WARNING Dirty Shutdown !!!")
 		return
 	}
+
 	childLogger.Info().Msg("Stop Done !!!!")
 }

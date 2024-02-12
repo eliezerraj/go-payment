@@ -10,7 +10,7 @@ import(
 
 	"github.com/rs/zerolog/log"
 	"github.com/go-payment/internal/erro"
-	"github.com/aws/aws-xray-sdk-go/xray"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var childLogger = log.With().Str("adapter/restapi", "restapi").Logger()
@@ -58,12 +58,16 @@ func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, x
 
 func makeGet(ctx context.Context, url string, xApigwId string, id interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makeGet")
-	client := xray.Client(&http.Client{Timeout: time.Second * 29})
-	
+
+	client := http.Client{
+		Transport: otelhttp.NewTransport(http.DefaultTransport),
+		Timeout: time.Second * 29,
+	}
+
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext (ctx, "GET", url, nil)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return false, errors.New(err.Error())
@@ -105,15 +109,19 @@ func makeGet(ctx context.Context, url string, xApigwId string, id interface{}) (
 
 func makePost(ctx context.Context, url string, xApigwId string, data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makePost")
-	client := xray.Client(&http.Client{Timeout: time.Second * 29})
-	
+
+	client := http.Client{
+		Transport: otelhttp.NewTransport(http.DefaultTransport),
+		Timeout: time.Second * 29,
+	}
+
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
 
 	payload := new(bytes.Buffer)
 	json.NewEncoder(payload).Encode(data)
 
-	req, err := http.NewRequest("POST", url, payload)
+	req, err := http.NewRequestWithContext(ctx ,"POST", url, payload)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return false, errors.New(err.Error())

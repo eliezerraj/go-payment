@@ -1,21 +1,19 @@
 package service
 
 import (
-	//"os"
-	//"time"
 	"context"
 	"errors"
 	"github.com/rs/zerolog/log"
-	//"encoding/json"
+
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/go-payment/internal/core"
 	"github.com/go-payment/internal/erro"
 	"github.com/go-payment/internal/adapter/restapi"
 	"github.com/go-payment/internal/repository/postgre"
-	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/go-payment/internal/adapter/grpc"
-
+	
+	"go.opentelemetry.io/otel"
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
@@ -52,8 +50,8 @@ func (s WorkerService) SetSessionVariable(ctx context.Context, userCredential st
 func (s WorkerService) Get(ctx context.Context, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Get")
 	
-	_, root := xray.BeginSubsegment(ctx, "Service.Get")
-	defer root.Close(nil)
+	ctx, svcspan := otel.Tracer("go-payment").Start(ctx,"svc.Get")
+	defer svcspan.End()
 
 	res, err := s.workerRepository.Get(ctx, payment)
 	if err != nil {
@@ -67,7 +65,8 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	childLogger.Debug().Msg("Pay")
 	childLogger.Debug().Interface("payment:",payment).Msg("")
 	
-	_, root := xray.BeginSubsegment(ctx, "Service.Pay")
+	ctx, svcspan := otel.Tracer("go-payment").Start(ctx,"svc.Pay")
+	defer svcspan.End()
 
 	tx, err := s.workerRepository.StartTx(ctx)
 	if err != nil {
@@ -80,7 +79,6 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 		} else {
 			tx.Commit()
 		}
-		root.Close(nil)
 	}()
 
 	if (payment.CardType != "CREDIT") && (payment.CardType != "DEBIT") {
@@ -98,6 +96,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 		return nil, errors.New(err.Error())
     }
 
+	svcspan.AddEvent("Begin Transaction - lock")
 	payment.FkAccountID = account_parsed.ID
 	payment.Status = "PENDING"
 	res, err := s.workerRepository.Add(ctx, tx ,payment)
@@ -130,6 +129,8 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	if res_update == 0 {
 		return nil, erro.ErrUpdate
 	}
+
+	svcspan.AddEvent("Release Transaction - unlock")
 
 	return res, nil
 }

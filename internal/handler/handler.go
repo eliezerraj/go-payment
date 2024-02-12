@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-payment/internal/core"
 	"github.com/go-payment/internal/erro"
-	
+	"go.opentelemetry.io/otel"
 )
 
 var childLogger = log.With().Str("handler", "handler").Logger()
@@ -19,21 +19,9 @@ func MiddleWareHandlerHeader(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		childLogger.Debug().Msg("-------------- MiddleWareHandlerHeader (INICIO)  --------------")
 	
-		/*if reqHeadersBytes, err := json.Marshal(r.Header); err != nil {
-			childLogger.Error().Err(err).Msg("Could not Marshal http headers !!!")
-		} else {
-			childLogger.Debug().Str("Headers : ", string(reqHeadersBytes) ).Msg("")
-		}
-
-		childLogger.Debug().Str("Method : ", r.Method ).Msg("")
-		childLogger.Debug().Str("URL : ", r.URL.Path ).Msg("")*/
-
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin, access-control-allow-headers")
-		//log.Println(r.Header.Get("Host"))
-		//log.Println(r.Header.Get("User-Agent"))
-		//log.Println(r.Header.Get("X-Forwarded-For"))
 
 		childLogger.Debug().Msg("-------------- MiddleWareHandlerHeader (FIM) ----------------")
 
@@ -47,15 +35,6 @@ func (h *HttpWorkerAdapter) DecoratorDB(next http.Handler) http.Handler {
 
 		childLogger.Debug().Msg("-------------- Decorator - MiddleWareHandlerHeader (INICIO) --------------")
 	
-		/*if reqHeadersBytes, err := json.Marshal(r.Header); err != nil {
-			childLogger.Error().Err(err).Msg("Could not Marshal http headers !!!")
-		} else {
-			childLogger.Debug().Str("Headers : ", string(reqHeadersBytes) ).Msg("")
-		}
-
-		childLogger.Debug().Str("Method : ", r.Method ).Msg("")
-		childLogger.Debug().Str("URL : ", r.URL.Path ).Msg("")*/
-
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin, access-control-allow-headers")
@@ -99,8 +78,10 @@ func (h *HttpWorkerAdapter) Header(rw http.ResponseWriter, req *http.Request) {
 func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Get")
 
-	vars := mux.Vars(req)
+	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.Get")
+	defer hdlspan.End()
 
+	vars := mux.Vars(req)
 	payment := core.Payment{}
 
 	varID, err := strconv.Atoi(vars["id"]) 
@@ -111,7 +92,7 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
     } 
   
 	payment.ID = varID
-	res, err := h.workerService.Get(req.Context(), payment)
+	res, err := h.workerService.Get(ctx, payment)
 	if err != nil {
 		switch err {
 		case erro.ErrNotFound:
@@ -132,6 +113,9 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Pay")
 
+	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.Get")
+	defer hdlspan.End()
+
 	payment := core.Payment{}
 	err := json.NewDecoder(req.Body).Decode(&payment)
     if err != nil {
@@ -140,7 +124,7 @@ func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
         return
     }
 
-	res, err := h.workerService.Pay(req.Context(), payment)
+	res, err := h.workerService.Pay(ctx, payment)
 	if err != nil {
 		switch err {
 			case erro.ErrNotFound:
@@ -161,7 +145,10 @@ func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 func (h *HttpWorkerAdapter) GetPodGrpc(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("GetPodGrpc")
 
-	res, err := h.workerService.GetInfoPodGrpc(req.Context())
+	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.GetPodGrpc")
+	defer hdlspan.End()
+
+	res, err := h.workerService.GetInfoPodGrpc(ctx)
 	if err != nil {
 		switch err {
 		default:

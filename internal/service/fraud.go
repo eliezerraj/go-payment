@@ -1,6 +1,7 @@
 package service
 
 import (
+	//"log"
 	"context"
 	"encoding/json"
 
@@ -11,8 +12,7 @@ import (
 	proto "github.com/go-payment/internal/proto"
 	"github.com/golang/protobuf/jsonpb"
 
-	"github.com/aws/aws-xray-sdk-go/xray"
-
+	"go.opentelemetry.io/otel"
 )
 
 func ProtoToJSON(msg pb.Message) (string, error) {
@@ -33,8 +33,8 @@ func JSONToProto(data string, msg pb.Message) error {
 func (s WorkerService) GetInfoPodGrpc(ctx context.Context) (interface{}, error){
 	childLogger.Debug().Msg("GetInfoPodGrpc")
 
-	_, root := xray.BeginSubsegment(ctx, "Service.InfoPodGrpc")
-	defer root.Close(nil)
+	ctx, span := otel.Tracer("appName").Start(ctx,"svc.GetInfoPodGrpc")
+	defer span.End()
 
 	header := metadata.New(map[string]string{"client-id": "client-001", "authorization": "Beared cookie"})
 	ctx = metadata.NewOutgoingContext(ctx, header)
@@ -80,8 +80,6 @@ func (s WorkerService) GetInfoPodGrpc(ctx context.Context) (interface{}, error){
 func (s WorkerService) CheckPaymentFraud(ctx context.Context) (interface{}, error){
 	childLogger.Debug().Msg("CheckPaymentFraud")
 
-	_, root := xray.BeginSubsegment(ctx, "Service.CheckPaymentFraud")
-	defer root.Close(nil)
 
 	return true, nil
 }

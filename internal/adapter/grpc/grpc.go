@@ -5,7 +5,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	proto "github.com/go-payment/internal/proto"
-
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 )
 
 var childLogger = log.With().Str("adapter/grpc", "fraud").Logger()
@@ -23,6 +23,7 @@ func StartGrpcClient(HOST string) (GrpcClient, error){
 	opts = append(opts, grpc.WithBlock()) // Wait for ready
 	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`)) // 
 	opts = append(opts, grpc.WithInsecure()) // no TLS
+	opts = append(opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor())) // Otel
 
 	conn, err := grpc.Dial(HOST, opts...)
 	if err != nil {
