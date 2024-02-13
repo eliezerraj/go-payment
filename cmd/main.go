@@ -52,6 +52,9 @@ func getEnv() {
 	if os.Getenv("GRPC_HOST") !=  "" {	
 		infoPod.GrpcHost = os.Getenv("GRPC_HOST")
 	}
+	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") !=  "" {	
+		infoPod.OtelExportEndpoint = os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	}
 
 	if os.Getenv("DB_HOST") !=  "" {
 		envDB.Host = os.Getenv("DB_HOST")
@@ -81,7 +84,6 @@ func getEnv() {
 	} else {
 		noAZ = true
 	}
-
 }
 
 func init(){

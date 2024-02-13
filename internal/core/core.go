@@ -24,6 +24,7 @@ type InfoPod struct {
 	AvailabilityZone 	string `json:"availabilityZone"`
 	Database			*DatabaseRDS
 	GrpcHost			string `json:"grpc_host"`
+	OtelExportEndpoint	string `json:"otel_export_endpoint"`
 }
 
 type Server struct {

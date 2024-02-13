@@ -63,7 +63,6 @@ func (s WorkerService) Get(ctx context.Context, payment core.Payment) (*core.Pay
 
 func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Pay")
-	childLogger.Debug().Interface("payment:",payment).Msg("")
 	
 	ctx, svcspan := otel.Tracer("go-payment").Start(ctx,"svc.Pay")
 	defer svcspan.End()

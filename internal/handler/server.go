@@ -37,23 +37,25 @@ func NewHttpWorkerAdapter(workerService *service.WorkerService) *HttpWorkerAdapt
 }
 
 type HttpServer struct {
-	start 			time.Time
 	httpAppServer 	core.HttpAppServer
 }
 
 func NewHttpAppServer(httpAppServer core.HttpAppServer) HttpServer {
 	childLogger.Debug().Msg("NewHttpAppServer")
 
-	return HttpServer{	start: time.Now(), 
-						httpAppServer: httpAppServer,
-					}
+	return HttpServer{ httpAppServer: httpAppServer	}
 }
 
 func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *HttpWorkerAdapter) {
 	childLogger.Info().Msg("StartHttpAppServer")
 		
 	// ---------------------- OTEL ---------------
-	traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure())
+	var OTEL_EXPORTER_OTLP_ENDPOINT = h.httpAppServer.InfoPod.OtelExportEndpoint
+	childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", OTEL_EXPORTER_OTLP_ENDPOINT).Msg("")
+
+	traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
+												otlptracegrpc.WithEndpoint(OTEL_EXPORTER_OTLP_ENDPOINT),
+											)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("ERRO otlptracegrpc")
 	}
@@ -83,8 +85,6 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	// ----------------------------------
 
 	myRouter := mux.NewRouter().StrictSlash(true)
-	
-	//myRouter.Use(otelmux.Middleware("go-payment"))
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")

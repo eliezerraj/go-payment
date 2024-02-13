@@ -19,3 +19,4 @@ data:
   SERVER_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
   X_APIGW_API_ID: "129t4y8eoj"
   GRPC_HOST: ":50052"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-02-xray-collector.default.svc.cluster.local:4317"
