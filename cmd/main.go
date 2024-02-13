@@ -122,7 +122,7 @@ func init(){
 	}
 	envDB.User = string(file_user)
 	envDB.Password = string(file_pass)
-	envDB.Password="postgres"
+	//envDB.Password="postgres"
 	envDB.Db_timeout = 90
 
 	// Load info pod

@@ -22,7 +22,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-
 )
 
 type HttpWorkerAdapter struct {
@@ -50,11 +49,10 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	childLogger.Info().Msg("StartHttpAppServer")
 		
 	// ---------------------- OTEL ---------------
-	var OTEL_EXPORTER_OTLP_ENDPOINT = h.httpAppServer.InfoPod.OtelExportEndpoint
-	childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", OTEL_EXPORTER_OTLP_ENDPOINT).Msg("")
+	childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", h.httpAppServer.InfoPod.OtelExportEndpoint).Msg("")
 
 	traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
-												otlptracegrpc.WithEndpoint(OTEL_EXPORTER_OTLP_ENDPOINT),
+												otlptracegrpc.WithEndpoint(h.httpAppServer.InfoPod.OtelExportEndpoint),
 											)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("ERRO otlptracegrpc")
