@@ -84,7 +84,7 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 
 	myRouter := mux.NewRouter().StrictSlash(true)
 	
-	myRouter.Use(otelmux.Middleware("go-payment"))
+	//myRouter.Use(otelmux.Middleware("go-payment"))
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")
@@ -93,6 +93,7 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 
 	myRouter.HandleFunc("/info", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/info")
+		rw.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(rw).Encode(h.httpAppServer)
 	})
 	
@@ -108,27 +109,21 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 
 	payPayment := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	payPayment.Handle("/payment/pay", 
-						//xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".add")), 
-						http.HandlerFunc(httpWorkerAdapter.Pay),
-					//	),
-					)
+						http.HandlerFunc(httpWorkerAdapter.Pay),)
 	payPayment.Use(httpWorkerAdapter.DecoratorDB)
+	payPayment.Use(otelmux.Middleware("go-payment"))
 
 	getPayment := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
 	getPayment.Handle("/payment/get/{id}", 
-						//xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".get")),
-						http.HandlerFunc(httpWorkerAdapter.Get),
-					//	),
-					)
+						http.HandlerFunc(httpWorkerAdapter.Get),)
 	getPayment.Use(MiddleWareHandlerHeader)
-	
+	getPayment.Use(otelmux.Middleware("go-payment"))
+
 	podGrpc := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     podGrpc.Handle("/podGrpc", 
-				//	xray.Handler(xray.NewFixedSegmentNamer(fmt.Sprintf("%s%s%s", "payment:", h.httpAppServer.InfoPod.AvailabilityZone, ".get")),
-					http.HandlerFunc(httpWorkerAdapter.GetPodGrpc),
-				//	),
-			)
+					http.HandlerFunc(httpWorkerAdapter.GetPodGrpc),)
 	podGrpc.Use(MiddleWareHandlerHeader)
+	podGrpc.Use(otelmux.Middleware("go-payment"))
 
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpAppServer.Server.Port),      	
