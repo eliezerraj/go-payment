@@ -7,6 +7,7 @@ message PodInfo {
     string pod_name   = 2;
     string availability_zone   = 3;
     string grpc_host   = 4;
+    string version     = 5;
 }
 
 message PodInfoRequest {
