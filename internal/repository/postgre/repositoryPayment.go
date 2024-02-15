@@ -28,12 +28,14 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 													card_number, 
 													card_type,
 													status,
+													payment_at,
 													currency, 
 													amount,
 													mcc,
 													create_at,
 													update_at,
-													tenant_id
+													tenant_id,
+													card_style
 											FROM payment 
 											WHERE id =$1 `, payment.ID)
 	if err != nil {
@@ -46,13 +48,15 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 							&result_query.FkAccountID, 
 							&result_query.CardNumber, 
 							&result_query.CardType, 
-							&result_query.Status, 
+							&result_query.Status,
+							&result_query.PaymentAt,
 							&result_query.Currency,
 							&result_query.Amount,
 							&result_query.MCC,
 							&result_query.CreateAt,
 							&result_query.UpdateAt,
 							&result_query.TenantID,
+							&result_query.CardStyle, 
 						)
 		if err != nil {
 			childLogger.Error().Err(err).Msg("Scan statement")
@@ -71,16 +75,21 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Paym
 	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Add")
 	defer repospan.End()
 
+	if payment.PaymentAt.IsZero(){
+		payment.PaymentAt = time.Now()
+	}
 	stmt, err := tx.Prepare(`INSERT INTO payment ( 	fk_account_id, 
 													card_number,
+													card_style,
 													card_type,
+													payment_at,
 													status, 
 													currency,
 													amount,
 													mcc,
 													create_at,
 													tenant_id) 
-									VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id `)
+									VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id `)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("INSERT statement")
 		return nil, errors.New(err.Error())
@@ -92,6 +101,8 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Paym
 								payment.FkAccountID,
 								payment.CardNumber,
 								payment.CardType,
+								payment.CardStyle,
+								payment.PaymentAt,
 								payment.Status,
 								payment.Currency,
 								payment.Amount,

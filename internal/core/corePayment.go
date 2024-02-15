@@ -10,7 +10,9 @@ type Payment struct {
 	AccountID		string		`json:"account_id,omitempty"`
 	FkAccountID		int			`json:"fk_account_id,omitempty"`
 	CardNumber		string		`json:"card_number,omitempty"`
+	PaymentAt		time.Time	 	`json:"payment_at,omitempty"`
 	CardType		string  	`json:"card_type,omitempty"`
+	CardStyle		string  	`json:"card_style,omitempty"`
 	Status			string  	`json:"status,omitempty"`
 	Currency		string  	`json:"currency,omitempty"`
 	Amount			float64 	`json:"amount,omitempty"`
