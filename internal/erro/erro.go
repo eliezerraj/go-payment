@@ -17,4 +17,5 @@ var (
 	ErrInvalidAmount	= errors.New("Valor inválido para esse tipo de transaçao")
 	ErrInvalidId		= errors.New("Id invalido para a pesquisa, deve ser um numerico")
 	ErrCardTypeInvalid  = errors.New("Tipo de cartao invalido (CREDIT/DEBIT)")
+	ErrConvStrint		= errors.New("The field must be numeric !!!")
 )

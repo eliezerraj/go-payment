@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"strconv"
 	"errors"
 	"github.com/rs/zerolog/log"
+	"encoding/json"
 
 
 	"github.com/mitchellh/mapstructure"
@@ -83,21 +85,51 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	if (payment.CardType != "CREDIT") && (payment.CardType != "DEBIT") {
 		return nil, erro.ErrCardTypeInvalid
 	}
-	// Get Account
-	rest_interface_data, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain, s.restapi.XApigwId,"/get", payment.AccountID)
+	// Read Card
+	card := core.Card{}
+	card.CardNumber = payment.CardNumber
+	res_interface_card, err := s.workerRepository.GetCard(ctx, card)
 	if err != nil {
 		return nil, err
 	}
-	var account_parsed core.Account
-	err = mapstructure.Decode(rest_interface_data, &account_parsed)
+
+	var card_parsed core.Card
+	err = mapstructure.Decode(res_interface_card, &card_parsed)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
 		return nil, errors.New(err.Error())
     }
 
+	// Read Terminal
+	terminal := core.Terminal{}
+	terminal.Name = payment.TerminalName
+	res_interface_term, err := s.workerRepository.GetTerminal(ctx,terminal)
+	if err != nil {
+		return nil, err
+	}
+	var terminal_parsed core.Terminal
+	err = mapstructure.Decode(res_interface_term, &terminal_parsed)
+    if err != nil {
+		childLogger.Error().Err(err).Msg("error parse interface")
+		return nil, errors.New(err.Error())
+    }
+
+	// Get Account for Just for Check
+	res_interface_acc, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain, s.restapi.XApigwId,"/getId", strconv.Itoa(card_parsed.FkAccountID))
+	if err != nil {
+		return nil, err
+	}
+	var account_parsed core.Account
+	jsonString, err := json.Marshal(res_interface_acc)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Error Marshal")
+		return nil, err
+	}
+	json.Unmarshal(jsonString, &account_parsed)
 	svcspan.AddEvent("Begin Transaction - lock")
 	
-	payment.FkAccountID = account_parsed.ID
+	payment.FkCardID = card_parsed.ID
+	payment.FkTerminalId = terminal_parsed.ID
 	payment.Status = "PENDING"
 	res, err := s.workerRepository.Add(ctx, tx ,payment)
 	if err != nil {
@@ -105,12 +137,12 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	}
 
 	// Get Fund
-	rest_interface_data, err = s.restapi.GetData(ctx, s.restapi.ServerUrlDomain, s.restapi.XApigwId,"/fundBalanceAccount", payment.AccountID)
+	res_interface_data, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain, s.restapi.XApigwId,"/fundBalanceAccount", account_parsed.AccountID)
 	if err != nil {
 		return nil, err
 	}
 	var account_balance_parsed core.AccountBalance
-	err = mapstructure.Decode(rest_interface_data, &account_balance_parsed)
+	err = mapstructure.Decode(res_interface_data, &account_balance_parsed)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
 		return nil, errors.New(err.Error())
@@ -134,3 +166,4 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 
 	return res, nil
 }
+

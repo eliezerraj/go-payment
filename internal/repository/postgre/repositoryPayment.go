@@ -23,20 +23,21 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 	client:= w.databaseHelper.GetConnection()
 	
 	result_query := core.Payment{}
-	rows, err := client.QueryContext(ctx, `SELECT 	id, 
-													fk_account_id, 
+	rows, err := client.QueryContext(ctx, `	SELECT id, 
+													fk_card_id, 
 													card_number, 
-													card_type,
-													status,
-													payment_at,
+													fk_terminal_id, 
+													card_style, 
+													card_type, 
+													payment_at, 
+													mcc, 
+													status, 
 													currency, 
-													amount,
-													mcc,
-													create_at,
-													update_at,
-													tenant_id,
-													card_style
-											FROM payment 
+													amount, 
+													create_at, 
+													update_at, 
+													tenant_id
+											FROM payment
 											WHERE id =$1 `, payment.ID)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("SELECT statement")
@@ -45,18 +46,18 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 
 	for rows.Next() {
 		err := rows.Scan( 	&result_query.ID, 
-							&result_query.FkAccountID, 
-							&result_query.CardNumber, 
+							&result_query.FkCardID, 
+							&result_query.FkTerminalId, 
 							&result_query.CardType, 
-							&result_query.Status,
+							&result_query.CardMode,
 							&result_query.PaymentAt,
+							&result_query.MCC,
+							&result_query.Status,							
 							&result_query.Currency,
 							&result_query.Amount,
-							&result_query.MCC,
 							&result_query.CreateAt,
 							&result_query.UpdateAt,
 							&result_query.TenantID,
-							&result_query.CardStyle, 
 						)
 		if err != nil {
 			childLogger.Error().Err(err).Msg("Scan statement")
@@ -72,41 +73,47 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Pay")
 
+	childLogger.Debug().Interface("payment: ",payment).Msg("*****")
+
 	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Add")
 	defer repospan.End()
 
+	var_createAt := time.Now()
 	if payment.PaymentAt.IsZero(){
 		payment.PaymentAt = time.Now()
 	}
-	stmt, err := tx.Prepare(`INSERT INTO payment ( 	fk_account_id, 
-													card_number,
-													card_style,
-													card_type,
-													payment_at,
+	stmt, err := tx.Prepare(`INSERT INTO payment ( 	fk_card_id, 
+													card_number, 
+													fk_terminal_id, 
+													terminal_name, 
+													card_type, 
+													card_model, 
+													payment_at, 
+													mcc, 
 													status, 
-													currency,
-													amount,
-													mcc,
-													create_at,
-													tenant_id) 
-									VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id `)
+													currency, 
+													amount, 
+													create_at, 
+													tenant_id)
+									VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id `)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("INSERT statement")
 		return nil, errors.New(err.Error())
 	}
 
 	var id int
-	var_createAt := time.Now()
 	err = stmt.QueryRowContext(ctx, 
-								payment.FkAccountID,
+								payment.FkCardID,
 								payment.CardNumber,
+								payment.FkTerminalId,
+								payment.TerminalName,
 								payment.CardType,
-								payment.CardStyle,
+								payment.CardMode,
 								payment.PaymentAt,
+								payment.MCC,
 								payment.Status,
 								payment.Currency,
 								payment.Amount,
-								payment.MCC,
 								var_createAt,
 								payment.TenantID).Scan(&id)
 	if err != nil {

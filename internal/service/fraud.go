@@ -1,7 +1,6 @@
 package service
 
 import (
-	//"log"
 	"context"
 	"encoding/json"
 
@@ -67,7 +66,7 @@ func (s WorkerService) GetInfoPodGrpc(ctx context.Context) (interface{}, error){
 
 	jsonString, err := json.Marshal(result_filtered)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("Error mapstructure")
+		childLogger.Error().Err(err).Msg("Error Marshal")
 		return nil, err
 	}
 	json.Unmarshal(jsonString, &podInfo)

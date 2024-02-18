@@ -37,8 +37,8 @@ arr_mcc=(FOOD GAS HOTEL AIRLINE TRANSPORT EDUCATION STORE GYM CINEMA PARKING CAR
 
 arr_mcc=(HOTEL AIRLINE CAR_RENTAL)
 
-min=500
-max=510
+min=1
+max=500
 
 min_amount=1000
 max_amount=4000
@@ -56,22 +56,25 @@ dayfreq=1
 
 sum_day=21
 
-domain=http://localhost:5007/payment/pay
+#domain=http://localhost:5007/payment/pay
+domain=https://97x38r33ag.execute-api.us-east-2.amazonaws.com/Live/payment/pay
 
-for (( x=4; x>0; x-- ))
+for (( x=100; x>0; x-- ))
 do
     numdays=$((numdays + sum_day))
-    new_dt=`date '+%Y-%m-%d' -d "+$numdays days"`
+    new_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "+$numdays days"`
+    echo new_dt
     genAcc
-    for (( y=1; y>0; y-- ))
+    for (( y=2; y>0; y-- ))
     do
         genStyleCard
         genTypeCard
-            for (( z=1; z>0; z-- ))
+            for (( z=3; z>0; z-- ))
             do
                 genAmount
                 genMcc
-                echo curl -X POST $domain -H 'Content-Type: application/json' -d '{"account_id":"ACC-'$var_acc'","card_number":"111.222.333.'$var_acc'","dt_payment":"'${new_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_style":"'${arr_style_card[var_style_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount'}' 
+                echo curl -X POST $domain -H 'Content-Type: application/json' -d '{"account_id":"ACC-'$var_acc'","card_number":"111.222.333.'$var_acc'","payment_at":"'${new_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_style":"'${arr_style_card[var_style_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount'}'
+                     curl -X POST $domain -H 'Content-Type: application/json' -d '{"account_id":"ACC-'$var_acc'","card_number":"111.222.333.'$var_acc'","payment_at":"'${new_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_style":"'${arr_style_card[var_style_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount'}'  
             done
     done
 done
@@ -79,28 +82,28 @@ done
 arr_mcc=(FOOD STORE CINEMA PARKING BEVERAGE)
 
 min=1
-max=10
+max=500
 min_amount=20
 max_amount=120
 min_mcc=0
 max_mcc=4
-sum_day=5
+sum_day=3
 
-for (( x=10; x>0; x-- ))
+for (( x=100; x>0; x-- ))
 do
     numdays=$((numdays + sum_day))
     new_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "+$numdays days"`
     genAcc
-    for (( y=1; y>0; y-- ))
+    for (( y=3; y>0; y-- ))
     do
         genStyleCard
         genTypeCard
-            for (( z=1; z>0; z-- ))
+            for (( z=5; z>0; z-- ))
             do
                 genAmount
                 genMcc
-                echo curl -X POST $domain -H 'Content-Type: application/json' -d '{"account_id":"ACC-'$var_acc'","card_number":"111.222.333.'$var_acc'","dt_payment":"'${new_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_style":"'${arr_style_card[var_style_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount'}' 
-                curl -X POST $domain -H 'Content-Type: application/json' -d '{"account_id":"ACC-'$var_acc'","card_number":"111.222.333.'$var_acc'","dt_payment":"'${new_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_style":"'${arr_style_card[var_style_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount'}' 
+                echo curl -X POST $domain -H 'Content-Type: application/json' -d '{"account_id":"ACC-'$var_acc'","card_number":"111.222.333.'$var_acc'","payment_at":"'${new_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_style":"'${arr_style_card[var_style_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount'}' 
+                     curl -X POST $domain -H 'Content-Type: application/json' -d '{"account_id":"ACC-'$var_acc'","card_number":"111.222.333.'$var_acc'","payment_at":"'${new_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_style":"'${arr_style_card[var_style_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount'}' 
             done
     done
 done
