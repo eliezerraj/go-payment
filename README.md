@@ -27,8 +27,11 @@ go-payment ==> Repository
         amount              float8 NULL,
         create_at           timestamptz NULL,
         update_at           timestamptz NULL,
+        fraud            float8 NULL,
         tenant_id           varchar(200) NULL
     );
+
+    CREATE INDEX payment_idx ON payment (card_number);
 
     CREATE TABLE card (
         id                  SERIAL PRIMARY KEY,
@@ -43,6 +46,8 @@ go-payment ==> Repository
         update_at           timestamptz NULL,
         tenant_id           varchar(200) NULL
     );
+
+    CREATE INDEX card_idx ON card (card_number);
 
     CREATE TABLE terminal (
         id                  SERIAL PRIMARY KEY,

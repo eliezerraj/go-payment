@@ -35,7 +35,8 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 													currency, 
 													amount, 
 													create_at, 
-													update_at, 
+													update_at,
+													fraud, 
 													tenant_id
 											FROM payment
 											WHERE id =$1 `, payment.ID)
@@ -57,6 +58,7 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 							&result_query.Amount,
 							&result_query.CreateAt,
 							&result_query.UpdateAt,
+							&result_query.Fraud,
 							&result_query.TenantID,
 						)
 		if err != nil {
@@ -93,9 +95,10 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Paym
 													status, 
 													currency, 
 													amount, 
-													create_at, 
+													create_at,
+													fraud, 
 													tenant_id)
-									VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id `)
+									VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id `)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("INSERT statement")
 		return nil, errors.New(err.Error())
@@ -115,6 +118,7 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Paym
 								payment.Currency,
 								payment.Amount,
 								var_createAt,
+								payment.Fraud,
 								payment.TenantID).Scan(&id)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Exec statement")
