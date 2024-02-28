@@ -18,22 +18,24 @@ var childLogger = log.With().Str("adapter/restapi", "restapi").Logger()
 type RestApiSConfig struct {
 	ServerUrlDomain			string
 	XApigwId				string
+	ServerHost				string
 }
 
-func NewRestApi(serverUrlDomain string, xApigwId string) (*RestApiSConfig){
+func NewRestApi(serverUrlDomain string, serverHost string ,xApigwId string) (*RestApiSConfig){
 	childLogger.Debug().Msg("*** NewRestApi")
 	return &RestApiSConfig {
 		ServerUrlDomain: 	serverUrlDomain,
 		XApigwId: 			xApigwId,
+		ServerHost:			serverHost,
 	}
 }
 
-func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, xApigwId string, path string, id string) (interface{}, error) {
+func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, serverHost string, xApigwId string, path string, id string) (interface{}, error) {
 	childLogger.Debug().Msg("GetData")
 
 	domain := serverUrlDomain + path +"/" + id
 
-	data_interface, err := makeGet(ctx, domain, xApigwId ,id)
+	data_interface, err := makeGet(ctx, domain, serverHost,xApigwId ,id)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return nil, errors.New(err.Error())
@@ -42,12 +44,12 @@ func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, xA
 	return data_interface, nil
 }
 
-func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, xApigwId string, path string ,data interface{}) (interface{}, error) {
+func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, serverHost string, xApigwId string, path string ,data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("PostData")
 
 	domain := serverUrlDomain + path 
 
-	data_interface, err := makePost(ctx, domain, xApigwId ,data)
+	data_interface, err := makePost(ctx, domain, serverHost,xApigwId ,data)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return nil, errors.New(err.Error())
@@ -56,7 +58,7 @@ func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, x
 	return data_interface, nil
 }
 
-func makeGet(ctx context.Context, url string, xApigwId string, id interface{}) (interface{}, error) {
+func makeGet(ctx context.Context, url string, serverHost string, xApigwId string, id interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makeGet")
 
 	client := http.Client{
@@ -65,6 +67,7 @@ func makeGet(ctx context.Context, url string, xApigwId string, id interface{}) (
 	}
 
 	childLogger.Debug().Str("url : ", url).Msg("")
+	childLogger.Debug().Str("serverHost : ", serverHost).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
 
 	req, err := http.NewRequestWithContext (ctx, "GET", url, nil)
@@ -75,6 +78,7 @@ func makeGet(ctx context.Context, url string, xApigwId string, id interface{}) (
 
 	req.Header.Add("Content-Type", "application/json;charset=UTF-8");
 	req.Header.Add("x-apigw-api-id", xApigwId);
+	req.Header.Add("Host", serverHost);
 
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
@@ -107,7 +111,7 @@ func makeGet(ctx context.Context, url string, xApigwId string, id interface{}) (
 	return result, nil
 }
 
-func makePost(ctx context.Context, url string, xApigwId string, data interface{}) (interface{}, error) {
+func makePost(ctx context.Context, url string, serverHost string, xApigwId string, data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makePost")
 
 	client := http.Client{
@@ -116,6 +120,7 @@ func makePost(ctx context.Context, url string, xApigwId string, data interface{}
 	}
 
 	childLogger.Debug().Str("url : ", url).Msg("")
+	childLogger.Debug().Str("serverHost : ", serverHost).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
 
 	payload := new(bytes.Buffer)
@@ -129,6 +134,7 @@ func makePost(ctx context.Context, url string, xApigwId string, data interface{}
 
 	req.Header.Add("Content-Type", "application/json;charset=UTF-8");
 	req.Header.Add("x-apigw-api-id", xApigwId);
+	req.Header.Add("Host", serverHost);
 
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {

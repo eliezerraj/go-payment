@@ -26,7 +26,7 @@ import(
 var(
 	logLevel 	= 	zerolog.DebugLevel
 	noAZ		=	true // set only if you get to split the xray trace per AZ
-	serverUrlDomain, xApigwId 		string
+	serverUrlDomain, serverHost, xApigwId 		string
 	infoPod					core.InfoPod
 	envDB	 				core.DatabaseRDS
 	httpAppServerConfig 	core.HttpAppServer
@@ -77,6 +77,9 @@ func getEnv() {
 	}
 	if os.Getenv("X_APIGW_API_ID") !=  "" {	
 		xApigwId = os.Getenv("X_APIGW_API_ID")
+	}
+	if os.Getenv("SERVER_HOST") !=  "" {	
+		serverHost = os.Getenv("SERVER_HOST")
 	}
 
 	if os.Getenv("NO_AZ") == "false" {	
@@ -197,7 +200,7 @@ func main(){
 		log.Error().Err(err).Msg("Erro connect to grpc server")
 	}
 
-	restapi	:= restapi.NewRestApi(serverUrlDomain, xApigwId)
+	restapi	:= restapi.NewRestApi(serverUrlDomain, serverHost ,xApigwId)
 
 	httpAppServerConfig.Server = server
 	repoDB = postgre.NewWorkerRepository(dataBaseHelper)

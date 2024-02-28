@@ -19,7 +19,6 @@ import (
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
-
 type WorkerService struct {
 	workerRepository 		*postgre.WorkerRepository
 	restapi					*restapi.RestApiSConfig
@@ -115,7 +114,12 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
     }
 
 	// Get Account for Just for Check
-	res_interface_acc, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain, s.restapi.XApigwId,"/getId", strconv.Itoa(card_parsed.FkAccountID))
+	res_interface_acc, err := s.restapi.GetData(ctx, 
+												s.restapi.ServerUrlDomain,
+												s.restapi.ServerHost,
+												s.restapi.XApigwId,
+												"/getId", 
+												strconv.Itoa(card_parsed.FkAccountID))
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +141,12 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	}
 
 	// Get Fund
-	res_interface_data, err := s.restapi.GetData(ctx, s.restapi.ServerUrlDomain, s.restapi.XApigwId,"/fundBalanceAccount", account_parsed.AccountID)
+	res_interface_data, err := s.restapi.GetData(ctx, 
+												s.restapi.ServerUrlDomain,
+												s.restapi.ServerHost, 
+												s.restapi.XApigwId,
+												"/fundBalanceAccount", 
+												account_parsed.AccountID)
 	if err != nil {
 		return nil, err
 	}

@@ -64,16 +64,17 @@ go-payment ==> Repository
 + POST /payment/pay
 
         {
-        "card_number":"111.111.000.001",
-        "payment_at":"2024-02-14T22:59:01.859507132-03:00",
-        "terminal_name": "TERM-1",
-        "card_type":"CREDIT",
-        "card_style":"CHIP",
-        "currency":"BRL",
-        "mcc":"STORE",
-        "amount":52
+            "card_number":"111.111.000.001",
+            "payment_at":"2024-02-14T22:59:01.859507132-03:00",
+            "terminal_name": "TERM-1",
+            "card_type":"CREDIT",
+            "card_model":"CHIP",
+            "currency":"BRL",
+            "mcc":"STORE",
+            "amount":52,
+            "fraud": 1
         }
-        
+                
 + GET  /payment/get/6
 
 + GET  /podGrpc
