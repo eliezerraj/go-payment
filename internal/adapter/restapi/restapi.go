@@ -70,7 +70,7 @@ func makeGet(ctx context.Context, url string, serverHost string, xApigwId string
 	childLogger.Debug().Str("serverHost : ", serverHost).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
 
-	req, err := http.NewRequestWithContext (ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return false, errors.New(err.Error())
@@ -78,7 +78,7 @@ func makeGet(ctx context.Context, url string, serverHost string, xApigwId string
 
 	req.Header.Add("Content-Type", "application/json;charset=UTF-8");
 	req.Header.Add("x-apigw-api-id", xApigwId);
-	req.Header.Add("Host", serverHost);
+	req.Host = serverHost;
 
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
@@ -134,7 +134,7 @@ func makePost(ctx context.Context, url string, serverHost string, xApigwId strin
 
 	req.Header.Add("Content-Type", "application/json;charset=UTF-8");
 	req.Header.Add("x-apigw-api-id", xApigwId);
-	req.Header.Add("Host", serverHost);
+	req.Host = serverHost;
 
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
