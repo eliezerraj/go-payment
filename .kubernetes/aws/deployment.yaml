@@ -76,6 +76,10 @@ spec:
             failureThreshold: 3
             successThreshold: 1
             timeoutSeconds: 5
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh","-c","sleep 2"]
       terminationGracePeriodSeconds: 60
       affinity:
         podAntiAffinity:

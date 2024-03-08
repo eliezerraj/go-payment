@@ -168,7 +168,8 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 		return nil, err
 	}
 	if res_update == 0 {
-		return nil, erro.ErrUpdate
+		err = erro.ErrUpdate
+		return nil, err
 	}
 
 	svcspan.AddEvent("Release Transaction - unlock")
