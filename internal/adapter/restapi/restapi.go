@@ -38,7 +38,7 @@ func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, se
 	data_interface, err := makeGet(ctx, domain, serverHost,xApigwId ,id)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
-		return nil, errors.New(err.Error())
+		return nil, err
 	}
     
 	return data_interface, nil
@@ -52,7 +52,7 @@ func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, s
 	data_interface, err := makePost(ctx, domain, serverHost,xApigwId ,data)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
-		return nil, errors.New(err.Error())
+		return nil, err
 	}
     
 	return data_interface, nil

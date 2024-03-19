@@ -27,8 +27,8 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 													fk_card_id, 
 													card_number, 
 													fk_terminal_id, 
-													card_style, 
 													card_type, 
+													card_model, 
 													payment_at, 
 													mcc, 
 													status, 
@@ -48,6 +48,7 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 	for rows.Next() {
 		err := rows.Scan( 	&result_query.ID, 
 							&result_query.FkCardID, 
+							&result_query.CardNumber, 
 							&result_query.FkTerminalId, 
 							&result_query.CardType, 
 							&result_query.CardMode,

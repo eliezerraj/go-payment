@@ -50,7 +50,7 @@ genMinutes(){
 }
 
 declare -a arr_model_card
-arr_model_card=(CHIP VIRTUAL)
+arr_model_card=(VIRTUAL CHIP)
 
 declare -a arr_type_card
 arr_type_card=(CREDIT DEBIT)
@@ -62,7 +62,7 @@ arr_mcc=(PARKING BEVERAGE FOOD LAUNDRY CINEMA BOOK GIFT CASH GAS PET DRUG_STORE 
 #domain=http://localhost:5007/payment/pay
 #domain=https://97x38r33ag.execute-api.us-east-2.amazonaws.com/Live/payment/pay
 
-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2NvcGUiOlsiYWRtaW4iXSwiZXhwIjoxNzA5MDgzNDE2fQ.TnJ9WrmbIy3rVKCq9TJ7-rstl9-1Uza2wSUXth13EWk
+token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2NvcGUiOlsiYWRtaW4iXSwiZXhwIjoxNzEwNTU1NzU3fQ.aDrktqYDx7ahXSNfxjYnGMRsJMfYAhWEtMp5cxXjX-E
 domain=https://go-api-global.architecture.caradhras.io/payment/payment/pay
 
 min_model=0
@@ -70,11 +70,8 @@ max_model=1
 min_tcc=0
 max_tcc=1
 
-min_term=1
-max_term=100
-
-min_minutes=1
-max_minutes=15
+min_term=50
+max_term=300
 
 echo "-------------------------------------"
 echo "-----------STARTING DAY---------------"
@@ -85,7 +82,8 @@ arr_mcc=(PARKING BEVERAGE FOOD LAUNDRY CINEMA BOOK GIFT CASH GAS PET DRUG_STORE 
 min_mcc=0
 max_mcc=16
 var_fraud=1
-fraud_rate=3
+
+fraud_rate=2
 
 min_tx_day=1
 max_tx_day=6
@@ -95,12 +93,16 @@ max_amount=800
 
 min_start=3
 max_start=25
+
 min_cc=7
 max_cc=55
 
+min_minutes=1
+max_minutes=300
+
 END_CC=100
  
-for d in {1..30..3} 
+for d in {0..30..3} 
 do
     echo "Day => "$d
     genCC
@@ -118,7 +120,7 @@ do
         for (( z=var_tx_per_day; z>0; z-- ))
         do
             genMinutes
-            start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-01-01T09:00:00.000-03:00 +$d days +$var_min minutes"`
+            start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-01-01T09:00:00.000-03:00 +$d days +$var_min seconds"`
 
             genMcc
             if [ $var_type_mcc -lt 2 ]
@@ -166,7 +168,8 @@ arr_mcc=(PARKING BEVERAGE FOOD CINEMA STORE)
 min_mcc=0
 max_mcc=4
 var_fraud=1
-fraud_rate=4
+
+fraud_rate=2
 
 min_tx_day=1
 max_tx_day=5
@@ -189,7 +192,7 @@ do
         for (( z=var_tx_per_day; z>0; z-- ))
         do
             genMinutes
-            start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-01-01T20:00:00.000-03:00 +$d days +$var_min minutes"`
+            start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-01-01T20:00:00.000-03:00 +$d days +$var_min seconds"`
             
             genMcc
             if [ $var_type_mcc -lt 1 ]

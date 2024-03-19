@@ -57,7 +57,7 @@ arr_mcc=(PARKING BEVERAGE FOOD LAUNDRY CINEMA BOOK GIFT CASH GAS PET DRUG_STORE 
 #domain=http://localhost:5007/payment/pay
 #domain=https://97x38r33ag.execute-api.us-east-2.amazonaws.com/Live/payment/pay
 
-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2NvcGUiOlsiYWRtaW4iXSwiZXhwIjoxNzA5MDgzNDE2fQ.TnJ9WrmbIy3rVKCq9TJ7-rstl9-1Uza2wSUXth13EWk
+token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2NvcGUiOlsiYWRtaW4iXSwiZXhwIjoxNzEwNTI4NTA4fQ.EIFuYLRUBKosbt0-OhSFtWLQ9DwlcqhU96BgLwRjiHU
 domain=https://go-api-global.architecture.caradhras.io/payment/payment/pay
 
 min_model=0
@@ -81,7 +81,7 @@ max_term=100
 min_tx_day=0
 max_tx_day=4
 
-min_minutes=1
+min_minutes=30
 max_minutes=600
 
 var_pan=111111000001
@@ -96,13 +96,14 @@ fraud_rate=1
 min_tx_day=0
 max_tx_day=4
 
-for (( d=0; d<30; d++ )) # Day
+for (( d=0; d<7; d++ )) # Day
 do
     echo "***********> New Day ****************"
 
-    for (( w=0; w<30; w++ )) #Qtd tx per minutes
+    for (( w=0; w<100; w++ )) #Qtd tx per minutes
     do
         echo "* * * * New CC * * * *"
+
         #genCC  #Generate CC
 
         #genTypeCard #Generate type card (CREDIT or DEBIT)           
@@ -119,6 +120,9 @@ do
         #    fi
         #fi
         #cc=$(($var_pan+$var_cc))
+
+        genModelCard
+
         cc=$(($var_pan+$w))
         cc_final="${cc:0:3}"."${cc:3:3}"."${cc:6:3}"."${cc:9:3}"
 
@@ -159,9 +163,9 @@ do
             
             var_amount=$((var_amount * fraud_rate))
             
-            #echo '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
+            echo '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
             #echo  curl -X POST $domain --header "Authorization: Bearer $token" --header 'Content-Type: application/json' -d '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount'}'
-            curl -X POST $domain --header "Authorization: Bearer $token" --header 'Content-Type: application/json' -d '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
+            #curl -X POST $domain --header "Authorization: Bearer $token" --header 'Content-Type: application/json' -d '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
         done
     done
 done
@@ -180,7 +184,7 @@ min_tx_day=0
 max_tx_day=2
 #max_tx_day=2
 
-for (( d=0; d<30; d++ )) # Day
+for (( d=0; d<7; d++ )) # Day
 do
     echo "***********> New Day ****************"
 
@@ -203,6 +207,9 @@ do
         #    fi
         #fi
         #cc=$(($var_pan+$var_cc))
+
+        genModelCard
+        
         cc=$(($var_pan+$w))
         cc_final="${cc:0:3}"."${cc:3:3}"."${cc:6:3}"."${cc:9:3}"
 
@@ -239,9 +246,9 @@ do
 
             var_amount=$((var_amount * fraud_rate))
 
-            #echo '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
+            echo '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
             #echo  curl -X POST $domain --header "Authorization: Bearer $token" --header 'Content-Type: application/json' -d '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount'}'
-            curl -X POST $domain --header "Authorization: Bearer $token" --header 'Content-Type: application/json' -d '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
+            #curl -X POST $domain --header "Authorization: Bearer $token" --header 'Content-Type: application/json' -d '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
         done
     done
 done
