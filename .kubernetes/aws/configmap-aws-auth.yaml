@@ -1,0 +1,32 @@
+## Allow the Account 908671954593 access the EKS in Account 992382474575
+apiVersion: v1
+data:
+  mapRoles: |
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      - system:node-proxier
+      rolearn: arn:aws:iam::992382474575:role/FargatePodExecutionRole-arch-eks-02
+      username: system:node:{{SessionName}}
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      - system:node-proxier
+      rolearn: arn:aws:iam::992382474575:role/RancherFargatePodExecutionRole-arch-eks-02
+      username: system:node:{{SessionName}}
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      rolearn: arn:aws:iam::992382474575:role/eks-arch-eks-02-nodeEksWorkers-1LL-RoleNodeInstance-DftOSQlbU9vJ
+      username: system:node:{{EC2PrivateDNSName}}
+    - groups:
+      - system:masters
+      rolearn: arn:aws:iam::992382474575:role/eks-admin-Eliezer
+      username: eks-admin
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2024-02-05T19:05:22Z"
+  name: aws-auth
+  namespace: kube-system
+  resourceVersion: "2191"
+  uid: 8adbb0d8-b026-4bd6-8cb4-e844742eba94

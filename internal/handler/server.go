@@ -123,6 +123,12 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	podGrpc.Use(MiddleWareHandlerHeader)
 	podGrpc.Use(otelmux.Middleware("go-payment"))
 
+	paymentFraudGrpc := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
+    paymentFraudGrpc.Handle("/checkPaymentFraudGrpc", 
+					http.HandlerFunc(httpWorkerAdapter.CheckPaymentFraudGrpc),)
+	paymentFraudGrpc.Use(MiddleWareHandlerHeader)
+	paymentFraudGrpc.Use(otelmux.Middleware("go-payment"))
+
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpAppServer.Server.Port),      	
 		Handler:      myRouter,                	          

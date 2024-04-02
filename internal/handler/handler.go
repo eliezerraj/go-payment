@@ -23,6 +23,14 @@ func MiddleWareHandlerHeader(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin, access-control-allow-headers")
 
+		w.Header().Set("strict-transport-security","max-age=63072000; includeSubdomains; preloa")
+		w.Header().Set("content-security-policy","default-src 'none'; img-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; frame-ancestors 'none'")
+		w.Header().Set("x-content-type-option","nosniff")
+		w.Header().Set("x-frame-options","DENY")
+		w.Header().Set("x-xss-protection","1; mode=block")
+		w.Header().Set("referrer-policy","same-origin")
+		w.Header().Set("permission-policy","Content-Type,access-control-allow-origin, access-control-allow-headers")
+		
 		childLogger.Debug().Msg("-------------- MiddleWareHandlerHeader (FIM) ----------------")
 
 		next.ServeHTTP(w, r)
@@ -39,6 +47,14 @@ func (h *HttpWorkerAdapter) DecoratorDB(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin, access-control-allow-headers")
 	
+		w.Header().Set("strict-transport-security","max-age=63072000; includeSubdomains; preloa")
+		w.Header().Set("content-security-policy","default-src 'none'; img-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; frame-ancestors 'none'")
+		w.Header().Set("x-content-type-option","nosniff")
+		w.Header().Set("x-frame-options","DENY")
+		w.Header().Set("x-xss-protection","1; mode=block")
+		w.Header().Set("referrer-policy","same-origin")
+		w.Header().Set("permission-policy","Content-Type,access-control-allow-origin, access-control-allow-headers")
+
 		// If the user was informed then insert it in the session
 		if string(r.Header.Get("client-id")) != "" {
 			h.workerService.SetSessionVariable(r.Context(),string(r.Header.Get("client-id")))
@@ -149,6 +165,34 @@ func (h *HttpWorkerAdapter) GetPodGrpc(rw http.ResponseWriter, req *http.Request
 	defer hdlspan.End()
 
 	res, err := h.workerService.GetInfoPodGrpc(ctx)
+	if err != nil {
+		switch err {
+		default:
+			rw.WriteHeader(500)
+			json.NewEncoder(rw).Encode(err.Error())
+			return
+		}
+	}
+
+	json.NewEncoder(rw).Encode(res)
+	return
+}
+
+func (h *HttpWorkerAdapter) CheckPaymentFraudGrpc(rw http.ResponseWriter, req *http.Request) {
+	childLogger.Debug().Msg("CheckPaymentFraudGrpc")
+
+	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.CheckPaymentFraudGrpc")
+	defer hdlspan.End()
+
+	paymentFraud := core.PaymentFraud{}
+	err := json.NewDecoder(req.Body).Decode(&paymentFraud)
+    if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
+        return
+    }
+
+	res, err := h.workerService.CheckPaymentFraudGrpc(ctx, &paymentFraud)
 	if err != nil {
 		switch err {
 		default:
