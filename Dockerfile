@@ -1,5 +1,5 @@
-cg#docker build -t go-payfee .
-#docker run -dit --name go-payfee -p 5000:5000 go-payfee
+#docker build -t go-payment .
+#docker run -dit --name go-payfee -p 5000:5000 go-payment
 
 FROM golang:1.21 As builder
 
