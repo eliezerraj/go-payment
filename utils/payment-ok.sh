@@ -87,20 +87,20 @@ var_fraud=0 # NO FRAUD
 fraud_rate=1 # NO FRAUD RATE
 
 min_tx_day=1 #min transaction per day
-max_tx_day=4 #max transaction per day
+max_tx_day=3 #max transaction per day
 
 min_amount=20 # min amount transaction
 max_amount=800 # max amount transaction
 
 min_start=3 # credit card start number
 max_start=25 # credit card skip number
-END_CC=200 # max credit card final number
+END_CC=500 # max credit card final number
 
 min_cc=3 # credit card skip number
 max_cc=7 # credit card skip number
 
-min_minutes=300 # min qtd between transaction (300=5min)
-max_minutes=3600 # max qtd between transaction (3600=60min)
+min_minutes=900 # min qtd between transaction (15min)
+max_minutes=3600 # max qtd between transaction (60min)
 
 for d in {0..30..1} # Day
 do
@@ -185,8 +185,8 @@ max_start=25 # credit card skip number
 min_cc=10 # credit card skip number
 max_cc=25 # credit card skip number
 
-min_minutes=300 # min qtd between transaction (300=5min)
-max_minutes=3600 # max qtd between transaction (3600=60min)
+min_minutes=900 # min qtd between transaction (15min)
+max_minutes=3600 # max qtd between transaction (60min)
 
 for d in {0..30..1}
 do
