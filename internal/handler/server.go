@@ -129,6 +129,12 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	paymentFraudGrpc.Use(MiddleWareHandlerHeader)
 	paymentFraudGrpc.Use(otelmux.Middleware("go-payment"))
 
+	paymentFraudFeature := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
+    paymentFraudFeature.Handle("/payment/payFraudFeature", 
+					http.HandlerFunc(httpWorkerAdapter.PayFraudFeature),)
+	paymentFraudFeature.Use(MiddleWareHandlerHeader)
+	paymentFraudFeature.Use(otelmux.Middleware("go-payment"))
+
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpAppServer.Server.Port),      	
 		Handler:      myRouter,                	          

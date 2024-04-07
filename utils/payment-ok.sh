@@ -62,7 +62,7 @@ arr_mcc=(PARKING BEVERAGE FOOD LAUNDRY CINEMA BOOK GIFT CASH GAS PET DRUG_STORE 
 #domain=http://localhost:5007/payment/pay
 #domain=https://97x38r33ag.execute-api.us-east-2.amazonaws.com/Live/payment/pay
 
-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2NvcGUiOlsiYWRtaW4iXSwiZXhwIjoxNzExOTk2ODc1fQ.DGQoY0Q2hwpg3Ff2umRcMu6ts9IT6_V7u4k25OwNXwY
+token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2NvcGUiOlsiYWRtaW4iXSwiZXhwIjoxNzEyMzY1NjA3fQ.MaxhNQT0v1uwDJAe2XTTfueaEzRTAZs4TW-a8HbFLuQ
 
 domain=https://go-api-global.architecture.caradhras.io/payment/payment/pay
 
@@ -86,18 +86,18 @@ max_mcc=16 # final idx arr-mcc
 var_fraud=0 # NO FRAUD
 fraud_rate=1 # NO FRAUD RATE
 
-min_tx_day=1 #min transaction per day
-max_tx_day=3 #max transaction per day
+min_tx_day=0 #min transaction per hour
+max_tx_day=2 #max transaction per hour
 
 min_amount=20 # min amount transaction
 max_amount=800 # max amount transaction
 
-min_start=3 # credit card start number
-max_start=25 # credit card skip number
-END_CC=500 # max credit card final number
+END_CC=999 # max credit card final number
 
-min_cc=3 # credit card skip number
-max_cc=7 # credit card skip number
+min_start=3 # credit card start number
+max_start=100 # credit card skip number
+min_cc=23 # credit card skip number
+max_cc=86 # credit card skip number
 
 min_minutes=900 # min qtd between transaction (15min)
 max_minutes=3600 # max qtd between transaction (60min)
@@ -109,12 +109,12 @@ do
     for h in {0..10..1} # Hour
     do
         echo "Hour => "$h
-        
+
         genCC
         genStart
 
-        #echo "var_start (credit card start number) => "$var_start
-        #echo "var_cc    (credit card skip number) => "$var_cc
+        echo "var_start (credit card start number) => "$var_start
+        echo "var_cc    (credit card skip number) => "$var_cc
 
         for w in $(eval echo "{$var_start..$END_CC..$var_cc}")
         do
@@ -126,7 +126,7 @@ do
             for (( z=var_tx_per_day; z>0; z-- ))
             do
                 genMinutes
-                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-01-26T09:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
+                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-05-01T09:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
 
                 genMcc
                 if [ $var_type_mcc -lt 2 ]
@@ -178,12 +178,12 @@ var_fraud=0
 fraud_rate=1
 
 min_tx_day=0
-max_tx_day=2
+max_tx_day=1
 
-min_start=3 # credit card start number
-max_start=25 # credit card skip number
-min_cc=10 # credit card skip number
-max_cc=25 # credit card skip number
+min_start=11 # credit card start number
+max_start=300 # credit card skip number
+min_cc=87 # credit card skip number
+max_cc=258 # credit card skip number
 
 min_minutes=900 # min qtd between transaction (15min)
 max_minutes=3600 # max qtd between transaction (60min)
@@ -209,7 +209,7 @@ do
             for (( z=var_tx_per_day; z>0; z-- ))
             do
                 genMinutes
-                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-01-26T20:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
+                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-05-01T20:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
 
                 genMcc
                 if [ $var_type_mcc -lt 1 ]

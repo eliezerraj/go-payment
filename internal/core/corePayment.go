@@ -83,13 +83,13 @@ type PaymentFraud struct {
 	MCC				string  	`json:"mcc,omitempty"`
 	Status			string  	`json:"status,omitempty"`
 	Currency		string  	`json:"currency,omitempty"`
-	Amount			float64 	`json:"amount,omitempty"`
-	Tx1Day			float64 	`json:"tx_1d,omitempty"`
-	Avg1Day			float64 	`json:"avg_1d,omitempty"`
-	Tx7Day			float64 	`json:"tx_7d,omitempty"`
-	Avg7Day			float64 	`json:"avg_7d,omitempty"`
-	Tx30Day			float64 	`json:"tx_30d,omitempty"`
-	Avg30Day		float64 	`json:"avg_30d,omitempty"`
-	TimeBtwTx		int32 		`json:"time_btw_cc_tx,omitempty"`
+	Amount			float64 	`json:"amount"`
+	Tx1Day			float64 	`json:"tx_1d"`
+	Avg1Day			float64 	`json:"avg_1d"`
+	Tx7Day			float64 	`json:"tx_7d"`
+	Avg7Day			float64 	`json:"avg_7d"`
+	Tx30Day			float64 	`json:"tx_30d"`
+	Avg30Day		float64 	`json:"avg_30d"`
+	TimeBtwTx		int32 		`json:"time_btw_cc_tx"`
 	Fraud			float64	  	`json:"fraud,omitempty"`
 }

@@ -129,7 +129,7 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Pay")
 
-	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.Get")
+	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.Pay")
 	defer hdlspan.End()
 
 	payment := core.Payment{}
@@ -199,6 +199,38 @@ func (h *HttpWorkerAdapter) CheckPaymentFraudGrpc(rw http.ResponseWriter, req *h
 			rw.WriteHeader(500)
 			json.NewEncoder(rw).Encode(err.Error())
 			return
+		}
+	}
+
+	json.NewEncoder(rw).Encode(res)
+	return
+}
+
+func (h *HttpWorkerAdapter) PayFraudFeature( rw http.ResponseWriter, req *http.Request) {
+	childLogger.Debug().Msg("PayFraudFeature")
+
+	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.PayFraudFeature")
+	defer hdlspan.End()
+
+	payment := core.Payment{}
+	err := json.NewDecoder(req.Body).Decode(&payment)
+    if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
+        return
+    }
+
+	res, err := h.workerService.PayFraudFeature(ctx, payment)
+	if err != nil {
+		switch err {
+			case erro.ErrNotFound:
+				rw.WriteHeader(404)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+			default:
+				rw.WriteHeader(409)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
 		}
 	}
 
