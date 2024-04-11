@@ -15,9 +15,10 @@ data:
   DB_SCHEMA: "public"
   DB_DRIVER: "postgres"
   NO_AZ: "true"
-  SERVER_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
-  #SERVER_URL_DOMAIN: "https://go-account.architecture.caradhras.io"
-  #SERVER_URL_DOMAIN: "https://vpce-svc-acc-908671954593.architecture.caradhras.io"
+  TLS: "false"
+  SERVER_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv" #Private
+  #SERVER_URL_DOMAIN: "https://go-account.architecture.caradhras.io" #Pulic
+  #SERVER_URL_DOMAIN: "https://vpce-svc-acc-908671954593.architecture.caradhras.io" #vpce-03c99f9816dadaef7-s2c9mfvk.vpce-svc-07d64576b83d898d4.us-east-2.vpce.amazonaws.com
   X_APIGW_API_ID: "129t4y8eoj"
   #SERVER_HOST: "go-account.architecture.caradhras.io"
   GRPC_HOST: "dns:///svc-go-fraud:50052"

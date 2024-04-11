@@ -16,3 +16,8 @@ data:
   DB_DRIVER: "postgres"
   NO_AZ: "true"
   TLS: "true"
+  SERVER_URL_DOMAIN: https://svc-go-account.test-a.svc.cluster.local:5000
+  X_APIGW_API_ID: "129t4y8eoj"
+  GRPC_HOST: "dns:///svc-go-fraud.test-a.svc.cluster.local:50052"
+  SERVER_HOST: "go-account.architecture.caradhras.io"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-02-xray-collector.default.svc.cluster.local:4317"

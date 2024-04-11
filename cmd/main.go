@@ -34,6 +34,9 @@ var(
 	dataBaseHelper 			postgre.DatabaseHelper
 	repoDB					postgre.WorkerRepository
 	configOTEL				core.ConfigOTEL
+	cert					core.Cert
+	caPEM					[]byte
+	isTLS		= 	false
 )
 
 func getEnv() {
@@ -82,6 +85,12 @@ func getEnv() {
 		serverHost = os.Getenv("SERVER_HOST")
 	}
 
+	if (os.Getenv("TLS") != "") {
+		if (os.Getenv("TLS") != "false") {	
+			isTLS = true
+		}
+	}
+
 	if os.Getenv("NO_AZ") == "false" {	
 		noAZ = false
 	} else {
@@ -125,7 +134,7 @@ func init(){
 	}
 	envDB.User = string(file_user)
 	envDB.Password = string(file_pass)
-	//envDB.Password="postgres"
+	envDB.Password="pass123"  //For local testes
 	envDB.Db_timeout = 90
 
 	// Load info pod
@@ -161,6 +170,17 @@ func init(){
 	} else {
 		infoPod.AvailabilityZone = "-"
 	}
+
+	// Load Certs
+	if (isTLS) {
+		caPEM, err = ioutil.ReadFile("/var/pod/cert/caB64.crt")
+		if err != nil {
+			log.Info().Err(err).Msg("Cert caPEM nao encontrado")
+		} else {
+			cert.CertPEM = caPEM
+		}
+	}
+
 	// Load info pod
 	infoPod.Database = &envDB
 }
@@ -195,7 +215,8 @@ func main(){
 		break
 	}
 
-	grpcClient, err  := grpc.StartGrpcClient(infoPod.GrpcHost)
+	grpcClient, err  := grpc.StartGrpcClient(infoPod.GrpcHost,
+											&cert)
 	if err != nil {
 		log.Error().Err(err).Msg("Erro connect to grpc server")
 	}
