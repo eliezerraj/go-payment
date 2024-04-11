@@ -134,7 +134,7 @@ func init(){
 	}
 	envDB.User = string(file_user)
 	envDB.Password = string(file_pass)
-	envDB.Password="pass123"  //For local testes
+	//envDB.Password="pass123"  //For local testes
 	envDB.Db_timeout = 90
 
 	// Load info pod
