@@ -118,8 +118,8 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	getPayment.Use(otelmux.Middleware("go-payment"))
 
 	podGrpc := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
-    podGrpc.Handle("/podGrpc", 
-					http.HandlerFunc(httpWorkerAdapter.GetPodGrpc),)
+    podGrpc.Handle("/getPodInfoGrpc", 
+					http.HandlerFunc(httpWorkerAdapter.GetPodInfoGrpc),)
 	podGrpc.Use(MiddleWareHandlerHeader)
 	podGrpc.Use(otelmux.Middleware("go-payment"))
 
@@ -130,8 +130,8 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	paymentFraudGrpc.Use(otelmux.Middleware("go-payment"))
 
 	paymentFraudFeature := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-    paymentFraudFeature.Handle("/payment/payFraudFeature", 
-					http.HandlerFunc(httpWorkerAdapter.PayFraudFeature),)
+    paymentFraudFeature.Handle("/payment/payWithCheckFraud", 
+					http.HandlerFunc(httpWorkerAdapter.PayWithCheckFraud),)
 	paymentFraudFeature.Use(MiddleWareHandlerHeader)
 	paymentFraudFeature.Use(otelmux.Middleware("go-payment"))
 

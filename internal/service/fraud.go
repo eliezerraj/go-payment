@@ -30,10 +30,10 @@ func JSONToProto(data string, msg pb.Message) error {
 	return jsonpb.UnmarshalString(data, msg)
 }
 
-func (s WorkerService) GetInfoPodGrpc(ctx context.Context) (interface{}, error){
+func (s WorkerService) GetPodInfoGrpc(ctx context.Context) (interface{}, error){
 	childLogger.Debug().Msg("GetInfoPodGrpc")
 
-	ctx, span := otel.Tracer("appName").Start(ctx,"svc.GetInfoPodGrpc")
+	ctx, span := otel.Tracer("appName").Start(ctx,"svc.GetPodInfoGrpc")
 	defer span.End()
 
 	header := metadata.New(map[string]string{"client-id": "client-001", "authorization": "Beared cookie"})

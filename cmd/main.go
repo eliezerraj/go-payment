@@ -223,7 +223,8 @@ func main(){
 
 	restapi	:= restapi.NewRestApi(serverUrlDomain, serverHost ,xApigwId)
 
-	httpAppServerConfig.Server = server
+	httpAppServerConfig.Server = &server
+	httpAppServerConfig.Cert = &cert
 	repoDB = postgre.NewWorkerRepository(dataBaseHelper)
 
 	workerService := service.NewWorkerService(&repoDB, restapi, &grpcClient)

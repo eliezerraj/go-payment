@@ -178,10 +178,10 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	return res, nil
 }
 
-func (s WorkerService) PayFraudFeature(ctx context.Context, payment core.Payment) (*core.Payment, error){
-	childLogger.Debug().Msg("PayFraudFeature")
+func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payment) (*core.Payment, error){
+	childLogger.Debug().Msg("PayWithCheckFraud")
 	
-	ctx, svcspan := otel.Tracer("go-payment").Start(ctx,"svc.PayFraudFeature")
+	ctx, svcspan := otel.Tracer("go-payment").Start(ctx,"svc.PayWithCheckFraud")
 	defer svcspan.End()
 
 	tx, err := s.workerRepository.StartTx(ctx)

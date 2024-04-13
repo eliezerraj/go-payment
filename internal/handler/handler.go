@@ -158,13 +158,13 @@ func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func (h *HttpWorkerAdapter) GetPodGrpc(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Debug().Msg("GetPodGrpc")
+func (h *HttpWorkerAdapter) GetPodInfoGrpc(rw http.ResponseWriter, req *http.Request) {
+	childLogger.Debug().Msg("GetPodInfoGrpc")
 
-	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.GetPodGrpc")
+	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.GetPodInfoGrpc")
 	defer hdlspan.End()
 
-	res, err := h.workerService.GetInfoPodGrpc(ctx)
+	res, err := h.workerService.GetPodInfoGrpc(ctx)
 	if err != nil {
 		switch err {
 		default:
@@ -206,10 +206,10 @@ func (h *HttpWorkerAdapter) CheckPaymentFraudGrpc(rw http.ResponseWriter, req *h
 	return
 }
 
-func (h *HttpWorkerAdapter) PayFraudFeature( rw http.ResponseWriter, req *http.Request) {
-	childLogger.Debug().Msg("PayFraudFeature")
+func (h *HttpWorkerAdapter) PayWithCheckFraud( rw http.ResponseWriter, req *http.Request) {
+	childLogger.Debug().Msg("PayWithCheckFraud")
 
-	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.PayFraudFeature")
+	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.PayWithCheckFraud")
 	defer hdlspan.End()
 
 	payment := core.Payment{}
@@ -220,7 +220,7 @@ func (h *HttpWorkerAdapter) PayFraudFeature( rw http.ResponseWriter, req *http.R
         return
     }
 
-	res, err := h.workerService.PayFraudFeature(ctx, payment)
+	res, err := h.workerService.PayWithCheckFraud(ctx, payment)
 	if err != nil {
 		switch err {
 			case erro.ErrNotFound:

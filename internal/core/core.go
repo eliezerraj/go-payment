@@ -13,18 +13,20 @@ type DatabaseRDS struct {
 
 type HttpAppServer struct {
 	InfoPod 	*InfoPod 		`json:"info_pod"`
-	Server     	Server     		`json:"server"`
+	Server     	*Server     	`json:"server"`
+	Cert		*Cert			`json:"cert"`
 }
 
 type InfoPod struct {
-	PodName				string `json:"pod_name"`
-	ApiVersion			string `json:"version"`
-	OSPID				string `json:"os_pid"`
-	IPAddress			string `json:"ip_address"`
-	AvailabilityZone 	string `json:"availabilityZone"`
-	Database			*DatabaseRDS
-	GrpcHost			string `json:"grpc_host"`
-	OtelExportEndpoint	string `json:"otel_export_endpoint"`
+	PodName				string `json:"pod_name,omitempty"`
+	ApiVersion			string `json:"version,omitempty"`
+	OSPID				string `json:"os_pid,omitempty"`
+	IPAddress			string `json:"ip_address,omitempty"`
+	AvailabilityZone 	string `json:"availabilityZone,omitempty"`
+	Database			*DatabaseRDS `json:"database,omitempty"`
+	GrpcHost			string `json:"grpc_host,omitempty"`
+	isTLS				string `json:"is_tls,omitempty"`
+	OtelExportEndpoint	string `json:"otel_export_endpoint,omitempty"`
 }
 
 type Server struct {

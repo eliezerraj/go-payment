@@ -15,11 +15,12 @@ data:
   DB_SCHEMA: "public"
   DB_DRIVER: "postgres"
   NO_AZ: "true"
-  TLS: "false"
+  TLS: "true"
   SERVER_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv" #Private
   #SERVER_URL_DOMAIN: "https://go-account.architecture.caradhras.io" #Pulic
   #SERVER_URL_DOMAIN: "https://vpce-svc-acc-908671954593.architecture.caradhras.io" #vpce-03c99f9816dadaef7-s2c9mfvk.vpce-svc-07d64576b83d898d4.us-east-2.vpce.amazonaws.com
   X_APIGW_API_ID: "129t4y8eoj"
   #SERVER_HOST: "go-account.architecture.caradhras.io"
-  GRPC_HOST: "dns:///svc-go-fraud:50052"
+  #GRPC_HOST: "dns:///svc-go-fraud.test-a.svc.cluster.local:50052" # eks-02
+  GRPC_HOST: "dns:///go-fraud.architecture.caradhras.io:50052"
   OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-02-xray-collector.default.svc.cluster.local:4317"
