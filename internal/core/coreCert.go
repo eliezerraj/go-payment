@@ -1,6 +1,7 @@
 package core
 
 type Cert struct {
-	CertPEM 			[]byte 		
-	CertPrivKeyPEM	    []byte     
+	CertPEM 			[]byte
+	CertAccountPEM 		[]byte 	 		
+	CertPrivKeyPEM	    []byte 
 }

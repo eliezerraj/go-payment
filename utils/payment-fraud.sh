@@ -125,7 +125,7 @@ do
             for (( z=var_tx_per_day; z>0; z-- ))
             do
                 genMinutes
-                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-05-01T09:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
+                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-01-01T09:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
 
                 genMcc
                 if [ $var_type_mcc -lt 2 ]
@@ -211,7 +211,7 @@ do
             for (( z=var_tx_per_day; z>0; z-- ))
             do
                 genMinutes
-                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-05-01T20:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
+                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-01-01T20:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
 
                 genMcc
                 if [ $var_type_mcc -lt 1 ]

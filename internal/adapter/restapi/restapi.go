@@ -7,9 +7,13 @@ import(
 	"encoding/json"
 	"bytes"
 	"context"
+	"crypto/x509"
+	"crypto/tls"
+	"encoding/base64"
 
 	"github.com/rs/zerolog/log"
 	"github.com/go-payment/internal/erro"
+	"github.com/go-payment/internal/core"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -19,23 +23,34 @@ type RestApiSConfig struct {
 	ServerUrlDomain			string
 	XApigwId				string
 	ServerHost				string
+	Cert					core.Cert
 }
 
-func NewRestApi(serverUrlDomain string, serverHost string ,xApigwId string) (*RestApiSConfig){
+func NewRestApi(serverUrlDomain string, 
+				serverHost string,
+				xApigwId string,
+				cert core.Cert) (*RestApiSConfig){
 	childLogger.Debug().Msg("*** NewRestApi")
+
 	return &RestApiSConfig {
 		ServerUrlDomain: 	serverUrlDomain,
 		XApigwId: 			xApigwId,
 		ServerHost:			serverHost,
+		Cert:				cert,
 	}
 }
 
-func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, serverHost string, xApigwId string, path string, id string) (interface{}, error) {
+func (r *RestApiSConfig) GetData(ctx context.Context, 
+								serverUrlDomain string, 
+								serverHost string, 
+								xApigwId string, 
+								path string, 
+								id string) (interface{}, error) {
 	childLogger.Debug().Msg("GetData")
 
 	domain := serverUrlDomain + path +"/" + id
 
-	data_interface, err := makeGet(ctx, domain, serverHost,xApigwId ,id)
+	data_interface, err := r.makeGet(ctx, domain, serverHost,xApigwId ,id)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return nil, err
@@ -44,12 +59,17 @@ func (r *RestApiSConfig) GetData(ctx context.Context, serverUrlDomain string, se
 	return data_interface, nil
 }
 
-func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, serverHost string, xApigwId string, path string ,data interface{}) (interface{}, error) {
+func (r *RestApiSConfig) PostData(	ctx context.Context, 
+									serverUrlDomain string, 
+									serverHost string, 
+									xApigwId string, 
+									path string,
+									data interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("PostData")
 
 	domain := serverUrlDomain + path 
 
-	data_interface, err := makePost(ctx, domain, serverHost,xApigwId ,data)
+	data_interface, err := makePost(ctx, domain, serverHost, xApigwId, data)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return nil, err
@@ -58,11 +78,46 @@ func (r *RestApiSConfig) PostData(ctx context.Context, serverUrlDomain string, s
 	return data_interface, nil
 }
 
-func makeGet(ctx context.Context, url string, serverHost string, xApigwId string, id interface{}) (interface{}, error) {
+func loadClientCertsTLS(cert *core.Cert) (*tls.Config, error){
+	childLogger.Debug().Msg("loadClientCertsTLS")
+
+	caPEM_Raw, err := base64.StdEncoding.DecodeString(string(cert.CertAccountPEM))
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Erro caPEM_Raw !!!")
+		return nil, err
+	}
+
+	certpool := x509.NewCertPool()
+	certpool.AppendCertsFromPEM(caPEM_Raw)
+
+	clientTLSConf := &tls.Config{
+		RootCAs: certpool,
+	}
+
+	return clientTLSConf ,nil
+}
+
+func (r *RestApiSConfig) makeGet(ctx context.Context, 
+								url string, 
+								serverHost string, 
+								xApigwId string, 
+								id interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makeGet")
 
+	transportHttp := &http.Transport{}
+	// -------------- Load Certs -------------------------
+	if string(r.Cert.CertAccountPEM) != "" {
+		transportHttpConfig, err := loadClientCertsTLS(&r.Cert)
+		if err != nil {
+			childLogger.Error().Err(err).Msg("Erro loadClientCertsTLS")
+			return nil, err
+		}
+		transportHttp.TLSClientConfig = transportHttpConfig
+	} 
+	// -------------- Load Certs -------------------------
+
 	client := http.Client{
-		Transport: otelhttp.NewTransport(http.DefaultTransport),
+		Transport: otelhttp.NewTransport(transportHttp),
 		Timeout: time.Second * 29,
 	}
 

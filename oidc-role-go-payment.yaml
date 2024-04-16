@@ -11,7 +11,7 @@ Parameters:
     Default: dev
   providerURL:
     Type: String
-    Default: https://oidc.eks.us-east-2.amazonaws.com/id/EFC4AFFB92FAA16E7D3568EA5FD390A6
+    Default: https://oidc.eks.us-east-2.amazonaws.com/id/AFCFC1A1AD548E003BC3CEAFB64AADA3
   ServiceAccountName:
     Type: String
     Default: sa-go-payment

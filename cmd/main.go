@@ -35,7 +35,7 @@ var(
 	repoDB					postgre.WorkerRepository
 	configOTEL				core.ConfigOTEL
 	cert					core.Cert
-	caPEM					[]byte
+	caPEM, caPEMAccount		[]byte
 	isTLS		= 	false
 )
 
@@ -134,7 +134,6 @@ func init(){
 	}
 	envDB.User = string(file_user)
 	envDB.Password = string(file_pass)
-	//envDB.Password="pass123"  //For local testes
 	envDB.Db_timeout = 90
 
 	// Load info pod
@@ -173,11 +172,18 @@ func init(){
 
 	// Load Certs
 	if (isTLS) {
-		caPEM, err = ioutil.ReadFile("/var/pod/cert/caB64.crt")
+		caPEM, err = ioutil.ReadFile("/var/pod/cert/ca_fraud_B64.crt") // local: ca_fraud_B64.crt
 		if err != nil {
-			log.Info().Err(err).Msg("Cert caPEM nao encontrado")
+			log.Info().Err(err).Msg("Cert caPEM Fraud nao encontrado")
 		} else {
 			cert.CertPEM = caPEM
+		}
+
+		caPEMAccount, err = ioutil.ReadFile("/var/pod/cert/ca_account_B64.crt")  // local: ca_account_B64.crt
+		if err != nil {
+			log.Info().Err(err).Msg("Cert caPEM Account nao encontrado")
+		} else {
+			cert.CertAccountPEM = caPEMAccount
 		}
 	}
 
@@ -221,7 +227,10 @@ func main(){
 		log.Error().Err(err).Msg("Erro connect to grpc server")
 	}
 
-	restapi	:= restapi.NewRestApi(serverUrlDomain, serverHost ,xApigwId)
+	restapi	:= restapi.NewRestApi(	serverUrlDomain, 
+									serverHost,
+									xApigwId,
+									cert )
 
 	httpAppServerConfig.Server = &server
 	httpAppServerConfig.Cert = &cert
