@@ -1,7 +1,7 @@
 package core
 
 type Cert struct {
-	isTLS				bool
+	IsTLS				bool
 	CertPEM 			[]byte
 	CertAccountPEM 		[]byte 	 		
 	CertPrivKeyPEM	    []byte 

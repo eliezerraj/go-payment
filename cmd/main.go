@@ -171,7 +171,7 @@ func init(){
 	}
 
 	// Load Certs
-	cert.isTLS = isTLS
+	cert.IsTLS = isTLS
 	if (isTLS) {
 		caPEM, err = ioutil.ReadFile("/var/pod/cert/ca_fraud_B64.crt") // local: ca_fraud_B64.crt
 		if err != nil {
