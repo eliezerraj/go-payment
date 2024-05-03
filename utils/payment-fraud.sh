@@ -62,7 +62,7 @@ arr_mcc=(PARKING BEVERAGE FOOD LAUNDRY CINEMA BOOK GIFT CASH GAS PET DRUG_STORE 
 #domain=http://localhost:5007/payment/pay
 #domain=https://97x38r33ag.execute-api.us-east-2.amazonaws.com/Live/payment/pay
 
-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2NvcGUiOlsiYWRtaW4iXSwiZXhwIjoxNzEyMzczMjA2fQ.nBwdA644pKZhEK6TdiMAc2ibWm1xeXslO2F1AjMNw2E
+token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2NvcGUiOlsiYWRtaW4iXSwiZXhwIjoxNzEzNDAwODM0fQ.iUebcV3URus1K1r13X9E-EhfYfEdFZQbEBWoCKD9N8A
 
 domain=https://go-api-global.architecture.caradhras.io/payment/payment/pay
 
@@ -125,7 +125,7 @@ do
             for (( z=var_tx_per_day; z>0; z-- ))
             do
                 genMinutes
-                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-01-01T09:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
+                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-03-01T09:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
 
                 genMcc
                 if [ $var_type_mcc -lt 2 ]
@@ -211,7 +211,7 @@ do
             for (( z=var_tx_per_day; z>0; z-- ))
             do
                 genMinutes
-                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-01-01T20:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
+                start_dt=`date '+%Y-%m-%dT%T.%9N%:z' -d "2024-03-01T20:00:00.000-03:00 +$d days +$h hours +$var_min seconds"`
 
                 genMcc
                 if [ $var_type_mcc -lt 1 ]
