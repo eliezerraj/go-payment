@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all-traffic
+  namespace: test-a
+spec:
+  podSelector:
+    matchLabels:
+      app: go-payment
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: test-a
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+            - 192.168.1.0/24

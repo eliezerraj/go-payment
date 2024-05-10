@@ -25,6 +25,7 @@ type InfoPod struct {
 	AvailabilityZone 	string `json:"availabilityZone,omitempty"`
 	Database			*DatabaseRDS `json:"database,omitempty"`
 	GrpcHost			string `json:"grpc_host,omitempty"`
+	GatewayMlHost		string `json:"gateway_ml_host,omitempty"`
 	isTLS				string `json:"is_tls,omitempty"`
 	OtelExportEndpoint	string `json:"otel_export_endpoint,omitempty"`
 }

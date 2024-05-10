@@ -21,23 +21,29 @@ var childLogger = log.With().Str("adapter/restapi", "restapi").Logger()
 
 type RestApiSConfig struct {
 	ServerUrlDomain			string
+	GatewayMlHost			string
 	XApigwId				string
+	XApigwIdMlHost			string
 	ServerHost				string
 	Cert					core.Cert
 }
 
-func NewRestApi(serverUrlDomain string, 
-				serverHost string,
-				xApigwId string,
+func NewRestApi(serverUrlDomain string,
+				gatewayMlHost	string,
+				serverHost 		string,
+				xApigwId 		string,
+				xApigwIdMlHost	string,
 				cert core.Cert) (*RestApiSConfig){
 	childLogger.Debug().Msg("*** NewRestApi")
 
 	return &RestApiSConfig {
-		ServerUrlDomain: 	serverUrlDomain,
-		XApigwId: 			xApigwId,
-		ServerHost:			serverHost,
-		Cert:				cert,
-	}
+							ServerUrlDomain: 	serverUrlDomain,
+							GatewayMlHost:		gatewayMlHost,
+							XApigwId: 			xApigwId,
+							XApigwIdMlHost:		xApigwIdMlHost,
+							ServerHost:			serverHost,
+							Cert:				cert,
+						}
 }
 
 func (r *RestApiSConfig) GetData(ctx context.Context, 

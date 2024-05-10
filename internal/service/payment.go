@@ -7,7 +7,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"encoding/json"
 
-
 	"github.com/mitchellh/mapstructure"
 	"github.com/go-payment/internal/core"
 	"github.com/go-payment/internal/erro"
@@ -230,6 +229,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
     }
 
 	// Get Account for Just for Check
+
 	res_interface_acc, err := s.restapi.GetData(ctx, 
 												s.restapi.ServerUrlDomain,
 												s.restapi.ServerHost,
@@ -273,7 +273,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 		return nil, errors.New(err.Error())
     }
 
-	// Get Payment Feature for Fraud
+	// Get Payment Feature for ML Fraud xgboost Grpc
 	payment_fraud := core.PaymentFraud{}
 	
 	res_pay_fraud, err := s.workerRepository.GetPaymentFraudFeature(ctx, payment)
@@ -302,6 +302,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	}else {
 		payment_fraud = *res_pay_fraud
 	}
+
 	childLogger.Debug().Interface("===> res_pay_fraud :", res_pay_fraud).Msg("")
 
 	res_svc_fraud, err := s.CheckPaymentFraudGrpc(ctx, &payment_fraud)
@@ -320,6 +321,28 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 
 	childLogger.Debug().Interface("*#########> parse_paymentFraud :", parse_paymentFraud).Msg("")
 	res.Fraud = parse_paymentFraud.Fraud
+
+	// Get Payment ML Anomaly
+	res_interface_anomaly, err := s.restapi.PostData(ctx, 
+													s.restapi.GatewayMlHost,
+													s.restapi.ServerHost, 
+													s.restapi.XApigwIdMlHost,
+													"/payment/anomaly", 
+													payment_fraud)
+	if err != nil {
+		return nil, err
+	}
+	childLogger.Debug().Interface("*#########> res_interface_anomaly :", res_interface_anomaly).Msg("")
+	
+	jsonString, err = json.Marshal(res_interface_anomaly)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Error Marshal")
+		return nil, err
+	}
+
+	var result map[string]interface{}
+	json.Unmarshal(jsonString, &result)
+	res.Anomaly = result["score"].(float64)
 
 	// Update the status payment
 	if (account_balance_parsed.Amount < payment.Amount) {

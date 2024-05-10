@@ -21,6 +21,7 @@ type Payment struct {
 	CreateAt		time.Time 	`json:"create_at,omitempty"`
 	UpdateAt		*time.Time 	`json:"update_at,omitempty"`
 	Fraud			float64	  	`json:"fraud,omitempty"`
+	Anomaly			float64	  	`json:"anomaly,omitempty"`
 	TenantID		string  	`json:"tenant_id,omitempty"`
 }
 

@@ -26,7 +26,7 @@ import(
 var(
 	logLevel 	= 	zerolog.DebugLevel
 	noAZ		=	true // set only if you get to split the xray trace per AZ
-	serverUrlDomain, serverHost, xApigwId 		string
+	serverUrlDomain, serverHost, xApigwId, xApigwIdMlHost 	string
 	infoPod					core.InfoPod
 	envDB	 				core.DatabaseRDS
 	httpAppServerConfig 	core.HttpAppServer
@@ -55,6 +55,14 @@ func getEnv() {
 	if os.Getenv("GRPC_HOST") !=  "" {	
 		infoPod.GrpcHost = os.Getenv("GRPC_HOST")
 	}
+
+	if os.Getenv("GATEWAY_ML_HOST") !=  "" {	
+		infoPod.GatewayMlHost = os.Getenv("GATEWAY_ML_HOST")
+	}
+	if os.Getenv("X_APIGW_API_ID_ML_HOST") !=  "" {	
+		xApigwIdMlHost = os.Getenv("X_APIGW_API_ID_ML_HOST")
+	}
+
 	if os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") !=  "" {	
 		infoPod.OtelExportEndpoint = os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
 	}
@@ -81,6 +89,7 @@ func getEnv() {
 	if os.Getenv("X_APIGW_API_ID") !=  "" {	
 		xApigwId = os.Getenv("X_APIGW_API_ID")
 	}
+
 	if os.Getenv("SERVER_HOST") !=  "" {	
 		serverHost = os.Getenv("SERVER_HOST")
 	}
@@ -229,15 +238,20 @@ func main(){
 	}
 
 	restapi	:= restapi.NewRestApi(	serverUrlDomain, 
+									infoPod.GatewayMlHost,
 									serverHost,
 									xApigwId,
+									xApigwIdMlHost,
 									cert )
 
 	httpAppServerConfig.Server = &server
 	httpAppServerConfig.Cert = &cert
 	repoDB = postgre.NewWorkerRepository(dataBaseHelper)
 
-	workerService := service.NewWorkerService(&repoDB, restapi, &grpcClient)
+	workerService := service.NewWorkerService(	&repoDB, 
+												restapi, 
+												&grpcClient)
+
 	httpWorkerAdapter := handler.NewHttpWorkerAdapter(workerService)
 
 	httpAppServerConfig.InfoPod = &infoPod
