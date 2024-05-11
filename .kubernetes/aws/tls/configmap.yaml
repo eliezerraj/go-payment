@@ -21,6 +21,11 @@ data:
   SERVER_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv" #Private NO TLS
   X_APIGW_API_ID: "129t4y8eoj"
   
+  GATEWAY_ML_HOST: "https://vpce.global.dev.caradhras.io/pv"
+  X_APIGW_API_ID_ML_HOST: "3p27io6tsa"
+
+  GRPC_HOST: "dns:///go-fraud.architecture.caradhras.io:50052"
+
   #SERVER_URL_DOMAIN: "https://vpce-arch-eks-01.architecture.caradhras.io"
   #X_APIGW_API_ID: ""
 
@@ -29,4 +34,4 @@ data:
   #SERVER_HOST: "go-account.architecture.caradhras.io" # Only LOCALHOST test
 
   #GRPC_HOST: "dns:///svc-go-fraud.test-a.svc.cluster.local:50052" # Only for the same EKS
-  GRPC_HOST: "dns:///go-fraud.architecture.caradhras.io:50052"
+ 

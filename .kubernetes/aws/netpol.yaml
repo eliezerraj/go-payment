@@ -17,7 +17,3 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: test-a
-        - ipBlock:
-            cidr: 0.0.0.0/0
-            except:
-            - 192.168.1.0/24
