@@ -18,45 +18,34 @@ import(
 )
 
 var childLogger = log.With().Str("adapter/restapi", "restapi").Logger()
-
-type RestApiSConfig struct {
-	ServerUrlDomain			string
-	GatewayMlHost			string
-	XApigwId				string
-	XApigwIdMlHost			string
-	ServerHost				string
-	Cert					core.Cert
+//----------------------------------------
+type RestApiService struct {
 }
 
-func NewRestApi(serverUrlDomain string,
-				gatewayMlHost	string,
-				serverHost 		string,
-				xApigwId 		string,
-				xApigwIdMlHost	string,
-				cert core.Cert) (*RestApiSConfig){
-	childLogger.Debug().Msg("*** NewRestApi")
+func NewRestApiService(	) *RestApiService{
+	childLogger.Debug().Msg("*** NewRestApiService")
 
-	return &RestApiSConfig {
-							ServerUrlDomain: 	serverUrlDomain,
-							GatewayMlHost:		gatewayMlHost,
-							XApigwId: 			xApigwId,
-							XApigwIdMlHost:		xApigwIdMlHost,
-							ServerHost:			serverHost,
-							Cert:				cert,
-						}
+	return &RestApiService {
+	}
 }
-
-func (r *RestApiSConfig) GetData(ctx context.Context, 
+//----------------------------------------
+func (r *RestApiService) GetData(ctx context.Context, 
 								serverUrlDomain string, 
-								serverHost string, 
-								xApigwId string, 
+								serverHost string,
+								xApigwId string,
+								cert core.Cert, 
 								path string, 
 								id string) (interface{}, error) {
 	childLogger.Debug().Msg("GetData")
 
 	domain := serverUrlDomain + path +"/" + id
 
-	data_interface, err := r.makeGet(ctx, domain, serverHost,xApigwId ,id)
+	data_interface, err := r.makeGet(ctx, 
+									domain, 
+									serverHost,
+									xApigwId,
+									cert,
+									id)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error Request")
 		return nil, err
@@ -65,7 +54,7 @@ func (r *RestApiSConfig) GetData(ctx context.Context,
 	return data_interface, nil
 }
 
-func (r *RestApiSConfig) PostData(	ctx context.Context, 
+func (r *RestApiService) PostData(	ctx context.Context, 
 									serverUrlDomain string, 
 									serverHost string, 
 									xApigwId string, 
@@ -87,7 +76,7 @@ func (r *RestApiSConfig) PostData(	ctx context.Context,
 func loadClientCertsTLS(cert *core.Cert) (*tls.Config, error){
 	childLogger.Debug().Msg("loadClientCertsTLS")
 
-	caPEM_Raw, err := base64.StdEncoding.DecodeString(string(cert.CertAccountPEM))
+	caPEM_Raw, err := base64.StdEncoding.DecodeString(string(cert.CaAccountPEM))
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Erro caPEM_Raw !!!")
 		return nil, err
@@ -103,17 +92,18 @@ func loadClientCertsTLS(cert *core.Cert) (*tls.Config, error){
 	return clientTLSConf ,nil
 }
 
-func (r *RestApiSConfig) makeGet(ctx context.Context, 
+func (r *RestApiService) makeGet(ctx context.Context, 
 								url string, 
 								serverHost string, 
 								xApigwId string, 
+								cert core.Cert,
 								id interface{}) (interface{}, error) {
 	childLogger.Debug().Msg("makeGet")
 
 	transportHttp := &http.Transport{}
 	// -------------- Load Certs -------------------------
-	if string(r.Cert.CertAccountPEM) != "" {
-		transportHttpConfig, err := loadClientCertsTLS(&r.Cert)
+	if string(cert.CaAccountPEM) != "" {
+		transportHttpConfig, err := loadClientCertsTLS(&cert)
 		if err != nil {
 			childLogger.Error().Err(err).Msg("Erro loadClientCertsTLS")
 			return nil, err
@@ -127,6 +117,7 @@ func (r *RestApiSConfig) makeGet(ctx context.Context,
 		Timeout: time.Second * 29,
 	}
 
+	log.Debug().Msg(".................................................")
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("serverHost : ", serverHost).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")
@@ -180,6 +171,7 @@ func makePost(ctx context.Context, url string, serverHost string, xApigwId strin
 		Timeout: time.Second * 29,
 	}
 
+	log.Debug().Msg(".................................................")
 	childLogger.Debug().Str("url : ", url).Msg("")
 	childLogger.Debug().Str("serverHost : ", serverHost).Msg("")
 	childLogger.Debug().Str("xApigwId : ", xApigwId).Msg("")

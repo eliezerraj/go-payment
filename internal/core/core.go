@@ -11,10 +11,12 @@ type DatabaseRDS struct {
 	Postgres_Driver		string `json:"postgres_driver"`
 }
 
-type HttpAppServer struct {
-	InfoPod 	*InfoPod 		`json:"info_pod"`
-	Server     	*Server     	`json:"server"`
-	Cert		*Cert			`json:"cert"`
+type AppServer struct {
+	InfoPod 		*InfoPod 		`json:"info_pod"`
+	Server     		*Server     	`json:"server"`
+	Database		*DatabaseRDS	`json:"database"`
+	RestEndpoint	*RestEndpoint	`json:"rest_endpoint"`
+	ConfigOTEL		*ConfigOTEL		`json:"otel_config"`
 }
 
 type InfoPod struct {
@@ -23,11 +25,7 @@ type InfoPod struct {
 	OSPID				string `json:"os_pid,omitempty"`
 	IPAddress			string `json:"ip_address,omitempty"`
 	AvailabilityZone 	string `json:"availabilityZone,omitempty"`
-	Database			*DatabaseRDS `json:"database,omitempty"`
-	GrpcHost			string `json:"grpc_host,omitempty"`
-	GatewayMlHost		string `json:"gateway_ml_host,omitempty"`
-	isTLS				string `json:"is_tls,omitempty"`
-	OtelExportEndpoint	string `json:"otel_export_endpoint,omitempty"`
+	IsAZ				bool   	`json:"is_az"`
 }
 
 type Server struct {
@@ -36,4 +34,29 @@ type Server struct {
 	WriteTimeout	int `json:"writeTimeout"`
 	IdleTimeout		int `json:"idleTimeout"`
 	CtxTimeout		int `json:"ctxTimeout"`
+}
+
+type RestEndpoint struct {
+	ServiceUrlDomain 	string `json:"service_url_domain"`
+	XApigwId			string `json:"xApigwId"`
+	CaCert				*Cert `json:"ca_cert"`
+	GatewayMlHost		string `json:"gateway_ml_host,omitempty"`
+	XApigwIdMl			string `json:"xApigwIdMl"`
+	GrpcHost			string `json:"grpc_host,omitempty"`
+	ServerHost			string `json:"server_host_localhost,omitempty"`
+}
+
+type Cert struct {
+	CaAccountPEM 		[]byte
+	CaFraudPEM 			[]byte  	 		
+}
+
+type ConfigOTEL struct {
+	OtelExportEndpoint		string
+	TimeInterval            int64    `mapstructure:"TimeInterval"`
+	TimeAliveIncrementer    int64    `mapstructure:"RandomTimeAliveIncrementer"`
+	TotalHeapSizeUpperBound int64    `mapstructure:"RandomTotalHeapSizeUpperBound"`
+	ThreadsActiveUpperBound int64    `mapstructure:"RandomThreadsActiveUpperBound"`
+	CpuUsageUpperBound      int64    `mapstructure:"RandomCpuUsageUpperBound"`
+	SampleAppPorts          []string `mapstructure:"SampleAppPorts"`
 }

@@ -26,9 +26,11 @@ type GrpcClient struct {
 func loadClientCertsTLS(cert *core.Cert) (credentials.TransportCredentials, error) {
 	childLogger.Debug().Msg("loadClientCertsTLS")
 
+	//log.Debug().Interface("cert.CaFraudPEM :",cert.CaFraudPEM).Msg("")
+
 	var clientTLSConf *tls.Config
 
-	caPEM_Raw, err := base64.StdEncoding.DecodeString(string(cert.CertPEM))
+	caPEM_Raw, err := base64.StdEncoding.DecodeString(string(cert.CaFraudPEM))
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Erro caPEM_Raw !!!")
 		return nil, err
@@ -60,8 +62,8 @@ func StartGrpcClient(host string,
 	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`)) // 
 	opts = append(opts, grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor())) // Otel
 
-	// -------------- Load Certs -------------------------
-	if string(cert.CertPEM) != "" {
+	// -------------- Load Certs -------------------------	
+	if string(cert.CaFraudPEM) != "" {
 		tlsCredentials, err := loadClientCertsTLS(cert)
 		if err != nil {
 			childLogger.Error().Err(err).Msg("Erro loadClientCertsTLS")

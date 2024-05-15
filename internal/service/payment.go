@@ -21,18 +21,21 @@ var childLogger = log.With().Str("service", "service").Logger()
 
 type WorkerService struct {
 	workerRepository 		*postgre.WorkerRepository
-	restapi					*restapi.RestApiSConfig
+	restEndpoint			*core.RestEndpoint
+	restApiService			*restapi.RestApiService
 	grpcClient 				*grpc.GrpcClient
 }
 
 func NewWorkerService(	workerRepository 	*postgre.WorkerRepository,
-						restapi				*restapi.RestApiSConfig,
+						restEndpoint		*core.RestEndpoint,
+						restApiService		*restapi.RestApiService,
 						grpcClient 			*grpc.GrpcClient) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
 		workerRepository:	workerRepository,
-		restapi:			restapi,
+		restEndpoint:		restEndpoint,
+		restApiService:		restApiService,
 		grpcClient: 		grpcClient,
 	}
 }
@@ -114,10 +117,11 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
     }
 
 	// Get Account for Just for Check
-	res_interface_acc, err := s.restapi.GetData(ctx, 
-												s.restapi.ServerUrlDomain,
-												s.restapi.ServerHost,
-												s.restapi.XApigwId,
+	res_interface_acc, err := s.restApiService.GetData(ctx, 
+												s.restEndpoint.ServiceUrlDomain,
+												s.restEndpoint.ServerHost,
+												s.restEndpoint.XApigwId,
+												*s.restEndpoint.CaCert,
 												"/getId", 
 												strconv.Itoa(card_parsed.FkAccountID))
 	if err != nil {
@@ -141,12 +145,13 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	}
 
 	// Get Fund
-	res_interface_data, err := s.restapi.GetData(ctx, 
-												s.restapi.ServerUrlDomain,
-												s.restapi.ServerHost, 
-												s.restapi.XApigwId,
-												"/fundBalanceAccount", 
-												account_parsed.AccountID)
+	res_interface_data, err := s.restApiService.GetData(ctx, 
+														s.restEndpoint.ServiceUrlDomain,
+														s.restEndpoint.ServerHost,
+														s.restEndpoint.XApigwId,
+														*s.restEndpoint.CaCert,
+														"/fundBalanceAccount", 
+														account_parsed.AccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -229,11 +234,11 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
     }
 
 	// Get Account for Just for Check
-
-	res_interface_acc, err := s.restapi.GetData(ctx, 
-												s.restapi.ServerUrlDomain,
-												s.restapi.ServerHost,
-												s.restapi.XApigwId,
+	res_interface_acc, err := s.restApiService.GetData(ctx, 
+												s.restEndpoint.ServiceUrlDomain,
+												s.restEndpoint.ServerHost,
+												s.restEndpoint.XApigwId,
+												*s.restEndpoint.CaCert,
 												"/getId", 
 												strconv.Itoa(card_parsed.FkAccountID))
 	if err != nil {
@@ -257,10 +262,11 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	}
 
 	// Get Fund
-	res_interface_data, err := s.restapi.GetData(ctx, 
-												s.restapi.ServerUrlDomain,
-												s.restapi.ServerHost, 
-												s.restapi.XApigwId,
+	res_interface_data, err := s.restApiService.GetData(ctx, 
+												s.restEndpoint.ServiceUrlDomain,
+												s.restEndpoint.ServerHost,
+												s.restEndpoint.XApigwId,
+												*s.restEndpoint.CaCert,
 												"/fundBalanceAccount", 
 												account_parsed.AccountID)
 	if err != nil {
@@ -323,10 +329,10 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	res.Fraud = parse_paymentFraud.Fraud
 
 	// Get Payment ML Anomaly
-	res_interface_anomaly, err := s.restapi.PostData(ctx, 
-													s.restapi.GatewayMlHost,
-													s.restapi.ServerHost, 
-													s.restapi.XApigwIdMlHost,
+	res_interface_anomaly, err := s.restApiService.PostData(ctx, 
+													s.restEndpoint.GatewayMlHost,
+													s.restEndpoint.ServerHost, 
+													s.restEndpoint.XApigwIdMl,
 													"/payment/anomaly", 
 													payment_fraud)
 	if err != nil {

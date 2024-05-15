@@ -23,36 +23,38 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
-
+//-------------------------------------------
 type HttpWorkerAdapter struct {
 	workerService 	*service.WorkerService
 }
 
-func NewHttpWorkerAdapter(workerService *service.WorkerService) *HttpWorkerAdapter {
+func NewHttpWorkerAdapter(workerService *service.WorkerService) HttpWorkerAdapter {
 	childLogger.Debug().Msg("NewHttpWorkerAdapter")
-	return &HttpWorkerAdapter{
+	return HttpWorkerAdapter{
 		workerService: workerService,
 	}
 }
-
+//-------------------------------------------
 type HttpServer struct {
-	httpAppServer 	core.HttpAppServer
+	httpServer	*core.Server
 }
 
-func NewHttpAppServer(httpAppServer core.HttpAppServer) HttpServer {
+func NewHttpAppServer(httpServer *core.Server) HttpServer {
 	childLogger.Debug().Msg("NewHttpAppServer")
 
-	return HttpServer{ httpAppServer: httpAppServer	}
+	return HttpServer{httpServer: httpServer }
 }
-
-func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *HttpWorkerAdapter) {
+//-------------------------------------------
+func (h HttpServer) StartHttpAppServer(	ctx context.Context, 
+										httpWorkerAdapter *HttpWorkerAdapter,
+										appServer *core.AppServer) {
 	childLogger.Info().Msg("StartHttpAppServer")
 		
 	// ---------------------- OTEL ---------------
-	childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", h.httpAppServer.InfoPod.OtelExportEndpoint).Msg("")
+	childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", appServer.ConfigOTEL.OtelExportEndpoint).Msg("")
 
 	traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
-												otlptracegrpc.WithEndpoint(h.httpAppServer.InfoPod.OtelExportEndpoint),
+												otlptracegrpc.WithEndpoint(appServer.ConfigOTEL.OtelExportEndpoint),
 											)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("ERRO otlptracegrpc")
@@ -86,13 +88,13 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")
-		json.NewEncoder(rw).Encode(h.httpAppServer)
+		json.NewEncoder(rw).Encode(appServer)
 	})
 
 	myRouter.HandleFunc("/info", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/info")
 		rw.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(rw).Encode(h.httpAppServer)
+		json.NewEncoder(rw).Encode(appServer)
 	})
 	
 	health := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
@@ -136,14 +138,14 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	paymentFraudFeature.Use(otelmux.Middleware("go-payment"))
 
 	srv := http.Server{
-		Addr:         ":" +  strconv.Itoa(h.httpAppServer.Server.Port),      	
+		Addr:         ":" +  strconv.Itoa(h.httpServer.Port),      	
 		Handler:      myRouter,                	          
-		ReadTimeout:  time.Duration(h.httpAppServer.Server.ReadTimeout) * time.Second,   
-		WriteTimeout: time.Duration(h.httpAppServer.Server.WriteTimeout) * time.Second,  
-		IdleTimeout:  time.Duration(h.httpAppServer.Server.IdleTimeout) * time.Second, 
+		ReadTimeout:  time.Duration(h.httpServer.ReadTimeout) * time.Second,   
+		WriteTimeout: time.Duration(h.httpServer.WriteTimeout) * time.Second,  
+		IdleTimeout:  time.Duration(h.httpServer.IdleTimeout) * time.Second, 
 	}
 
-	childLogger.Info().Str("Service Port : ", strconv.Itoa(h.httpAppServer.Server.Port)).Msg("Service Port")
+	childLogger.Info().Str("Service Port : ", strconv.Itoa(h.httpServer.Port)).Msg("Service Port")
 
 	go func() {
 		err := srv.ListenAndServe()
