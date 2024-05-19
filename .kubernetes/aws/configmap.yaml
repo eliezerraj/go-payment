@@ -6,19 +6,21 @@ metadata:
   labels:
     app: *app-name
 data:
-  API_VERSION: "1.2"
-  POD_NAME: "go-payment"
+  API_VERSION: "2.0"
+  POD_NAME: "go-payment.k8"
   PORT: "5007"
   DB_HOST: "rds-proxy-db-arch-02.proxy-cj4aqa08ettf.us-east-2.rds.amazonaws.com"
   DB_PORT: "5432"
   DB_NAME: "postgres"
   DB_SCHEMA: "public"
   DB_DRIVER: "postgres"
-  NO_AZ: "true"
-  TLS: "false"
+  SETPOD_AZ: "false"
+  TLS_ACCOUNT: "false"
+  TLS_FRAUD: "false"
+
   OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-02-xray-collector.default.svc.cluster.local:4317"
 
-  SERVER_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
+  SERVICE_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
   X_APIGW_API_ID: "129t4y8eoj"
 
   GATEWAY_ML_HOST: "https://vpce.global.dev.caradhras.io/pv"
