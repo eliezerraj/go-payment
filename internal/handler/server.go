@@ -85,6 +85,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	// ----------------------------------
 
 	myRouter := mux.NewRouter().StrictSlash(true)
+	myRouter.Use(MiddleWareHandlerHeader)
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")
@@ -105,7 +106,6 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 
 	header := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     header.HandleFunc("/header", httpWorkerAdapter.Header)
-	header.Use(MiddleWareHandlerHeader)
 
 	payPayment := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	payPayment.Handle("/payment/pay", 
@@ -116,25 +116,21 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	getPayment := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
 	getPayment.Handle("/payment/get/{id}", 
 						http.HandlerFunc(httpWorkerAdapter.Get),)
-	getPayment.Use(MiddleWareHandlerHeader)
 	getPayment.Use(otelmux.Middleware("go-payment"))
 
 	podGrpc := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     podGrpc.Handle("/getPodInfoGrpc", 
 					http.HandlerFunc(httpWorkerAdapter.GetPodInfoGrpc),)
-	podGrpc.Use(MiddleWareHandlerHeader)
 	podGrpc.Use(otelmux.Middleware("go-payment"))
 
 	paymentFraudGrpc := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
     paymentFraudGrpc.Handle("/checkPaymentFraudGrpc", 
 					http.HandlerFunc(httpWorkerAdapter.CheckPaymentFraudGrpc),)
-	paymentFraudGrpc.Use(MiddleWareHandlerHeader)
 	paymentFraudGrpc.Use(otelmux.Middleware("go-payment"))
 
 	paymentFraudFeature := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
     paymentFraudFeature.Handle("/payment/payWithCheckFraud", 
 					http.HandlerFunc(httpWorkerAdapter.PayWithCheckFraud),)
-	paymentFraudFeature.Use(MiddleWareHandlerHeader)
 	paymentFraudFeature.Use(otelmux.Middleware("go-payment"))
 
 	srv := http.Server{
