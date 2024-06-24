@@ -13,15 +13,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/go-payment/internal/service"
+	"github.com/go-payment/internal/lib"
 	"github.com/go-payment/internal/core"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/contrib/propagators/aws/xray"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 //-------------------------------------------
 type HttpWorkerAdapter struct {
@@ -52,6 +49,19 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 		
 	// ---------------------- OTEL ---------------
 	childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", appServer.ConfigOTEL.OtelExportEndpoint).Msg("")
+	
+	tp := lib.NewTracerProvider(ctx, appServer.ConfigOTEL, appServer.InfoPod)
+	defer func() { 
+		err := tp.Shutdown(ctx)
+		if err != nil{
+			childLogger.Error().Err(err).Msg("Erro closing OTEL tracer !!!")
+		}
+	}()
+	otel.SetTextMapPropagator(xray.Propagator{})
+	otel.SetTracerProvider(tp)
+
+	// --------------------- OLD -----------------//
+	/*childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", appServer.ConfigOTEL.OtelExportEndpoint).Msg("")
 
 	traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
 												otlptracegrpc.WithEndpoint(appServer.ConfigOTEL.OtelExportEndpoint),
@@ -81,7 +91,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 		if err != nil{
 			childLogger.Error().Err(err).Msg("Erro closing OTEL tracer !!!")
 		}
-	}()
+	}()*/
 	// ----------------------------------
 
 	myRouter := mux.NewRouter().StrictSlash(true)

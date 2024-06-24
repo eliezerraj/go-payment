@@ -4,46 +4,49 @@ import (
 	"context"
 	"time"
 	"errors"
-
 	_ "github.com/lib/pq"
 	"database/sql"
-
 	"github.com/go-payment/internal/erro"
 	"github.com/go-payment/internal/core"
-
-	"go.opentelemetry.io/otel"
+	"github.com/go-payment/internal/lib"
 )
 
 func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Get")
 
-	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Get")
-	defer repospan.End()
+	span := lib.Span(ctx, "repo.get")	
+    defer span.End()
 
 	client:= w.databaseHelper.GetConnection()
 	
 	result_query := core.Payment{}
-	rows, err := client.QueryContext(ctx, `	SELECT id, 
-													fk_card_id, 
-													card_number, 
-													fk_terminal_id, 
-													card_type, 
-													card_model, 
-													payment_at, 
-													mcc, 
-													status, 
-													currency, 
-													amount, 
-													create_at, 
-													update_at,
-													fraud, 
-													tenant_id
-											FROM payment
-											WHERE id =$1 `, payment.ID)
+	query := `	SELECT id, 
+						fk_card_id, 
+						card_number, 
+						fk_terminal_id, 
+						card_type, 
+						card_model, 
+						payment_at, 
+						mcc, 
+						status, 
+						currency, 
+						amount, 
+						create_at, 
+						update_at,
+						fraud, 
+						tenant_id
+				FROM payment
+				WHERE id =$1 `
+
+	rows, err := client.QueryContext(ctx, query , payment.ID)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("SELECT statement")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
 	}
+
+	lib.Event(span, query)
+	//span.AddEvent("Executing SQL query", trace.WithAttributes(attribute.String("db.statement", query)))
 
 	for rows.Next() {
 		err := rows.Scan( 	&result_query.ID, 
@@ -64,6 +67,7 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 						)
 		if err != nil {
 			childLogger.Error().Err(err).Msg("Scan statement")
+			span.RecordError(err)
 			return nil, errors.New(err.Error())
         }
 		return &result_query , nil
@@ -75,11 +79,10 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 
 func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Add")
-
 	childLogger.Debug().Interface("payment: ",payment).Msg("*****")
 
-	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Add")
-	defer repospan.End()
+	span := lib.Span(ctx, "repo.add")	
+    defer span.End()
 
 	var_createAt := time.Now()
 	if payment.PaymentAt.IsZero(){
@@ -102,6 +105,7 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Paym
 									VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id `)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("INSERT statement")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
 	}
 
@@ -123,6 +127,7 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Paym
 								payment.TenantID).Scan(&id)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Exec statement")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
 	}
 	defer stmt.Close()
@@ -136,8 +141,8 @@ func (w WorkerRepository) Add(ctx context.Context, tx *sql.Tx, payment core.Paym
 func (w WorkerRepository) Update(ctx context.Context, tx *sql.Tx, payment core.Payment) (int64, error){
 	childLogger.Debug().Msg("Update")
 
-	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Update")
-	defer repospan.End()
+	span := lib.Span(ctx, "repo.update")	
+    defer span.End()
 	
 	stmt, err := tx.Prepare(`update payment
 							set status = $2,
@@ -145,6 +150,7 @@ func (w WorkerRepository) Update(ctx context.Context, tx *sql.Tx, payment core.P
 							where id = $1 `)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("UPDATE statement")
+		span.RecordError(err)
 		return 0, errors.New(err.Error())
 	}
 
@@ -155,6 +161,7 @@ func (w WorkerRepository) Update(ctx context.Context, tx *sql.Tx, payment core.P
 								)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Exec statement")
+		span.RecordError(err)
 		return 0, errors.New(err.Error())
 	}
 
@@ -169,8 +176,8 @@ func (w WorkerRepository) GetPaymentFraudFeature(ctx context.Context, payment co
 	childLogger.Debug().Msg("GetPaymentFraudFeature")
 	childLogger.Debug().Interface("===>payment :", payment).Msg("")
 
-	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.GetPaymentFraudFeature")
-	defer repospan.End()
+	span := lib.Span(ctx, "repo.getPaymentFraudFeature")	
+    defer span.End()
 
 	client:= w.databaseHelper.GetConnection()
 	
@@ -237,6 +244,7 @@ func (w WorkerRepository) GetPaymentFraudFeature(ctx context.Context, payment co
 					&result_query.TimeBtwTx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Scan statement")
+		span.RecordError(err)
 		return nil, erro.ErrNotFound
 	}
 

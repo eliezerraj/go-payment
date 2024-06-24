@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-payment/internal/core"
 	"github.com/go-payment/internal/erro"
-	"go.opentelemetry.io/otel"
+	"github.com/go-payment/internal/lib"
 )
 
 var childLogger = log.With().Str("handler", "handler").Logger()
@@ -87,6 +87,9 @@ func (h *HttpWorkerAdapter) Live(rw http.ResponseWriter, req *http.Request) {
 func (h *HttpWorkerAdapter) Header(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Header")
 	
+	span := lib.Span(req.Context(), "handler.header")	
+    defer span.End()
+
 	json.NewEncoder(rw).Encode(req.Header)
 	return
 }
@@ -94,8 +97,8 @@ func (h *HttpWorkerAdapter) Header(rw http.ResponseWriter, req *http.Request) {
 func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Get")
 
-	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.Get")
-	defer hdlspan.End()
+	span := lib.Span(req.Context(), "handler.get")	
+    defer span.End()
 
 	vars := mux.Vars(req)
 	payment := core.Payment{}
@@ -103,23 +106,26 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 	varID, err := strconv.Atoi(vars["id"]) 
     if err != nil { 
 		rw.WriteHeader(500)
+		span.RecordError(err)
 		json.NewEncoder(rw).Encode(erro.ErrInvalidId.Error())
 		return
     } 
   
 	payment.ID = varID
-	res, err := h.workerService.Get(ctx, payment)
+	res, err := h.workerService.Get(req.Context(), payment)
 	if err != nil {
 		switch err {
-		case erro.ErrNotFound:
-			rw.WriteHeader(404)
-			json.NewEncoder(rw).Encode(err.Error())
-			return
-		default:
-			rw.WriteHeader(500)
-			json.NewEncoder(rw).Encode(err.Error())
-			return
-		}
+			case erro.ErrNotFound:
+				rw.WriteHeader(404)
+				span.RecordError(err)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+			default:
+				rw.WriteHeader(500)
+				span.RecordError(err)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+			}
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -129,18 +135,19 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Pay")
 
-	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.Pay")
-	defer hdlspan.End()
+	span := lib.Span(req.Context(), "handler.pay")	
+    defer span.End()
 
 	payment := core.Payment{}
 	err := json.NewDecoder(req.Body).Decode(&payment)
     if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
+		span.RecordError(err)
 		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
         return
     }
 
-	res, err := h.workerService.Pay(ctx, payment)
+	res, err := h.workerService.Pay(req.Context(), payment)
 	if err != nil {
 		switch err {
 			case erro.ErrNotFound:
@@ -161,17 +168,17 @@ func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 func (h *HttpWorkerAdapter) GetPodInfoGrpc(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("GetPodInfoGrpc")
 
-	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.GetPodInfoGrpc")
-	defer hdlspan.End()
+	span := lib.Span(req.Context(), "handler.getPodInfoGrpc")	
+    defer span.End()
 
-	res, err := h.workerService.GetPodInfoGrpc(ctx)
+	res, err := h.workerService.GetPodInfoGrpc(req.Context())
 	if err != nil {
 		switch err {
-		default:
-			rw.WriteHeader(500)
-			json.NewEncoder(rw).Encode(err.Error())
-			return
-		}
+			default:
+				rw.WriteHeader(500)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+			}
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -181,18 +188,19 @@ func (h *HttpWorkerAdapter) GetPodInfoGrpc(rw http.ResponseWriter, req *http.Req
 func (h *HttpWorkerAdapter) CheckPaymentFraudGrpc(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("CheckPaymentFraudGrpc")
 
-	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.CheckPaymentFraudGrpc")
-	defer hdlspan.End()
+	span := lib.Span(req.Context(), "handler.checkPaymentFraudGrpc")	
+    defer span.End()
 
 	paymentFraud := core.PaymentFraud{}
 	err := json.NewDecoder(req.Body).Decode(&paymentFraud)
     if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
+		span.RecordError(err)
 		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
         return
     }
 
-	res, err := h.workerService.CheckPaymentFraudGrpc(ctx, &paymentFraud)
+	res, err := h.workerService.CheckPaymentFraudGrpc(req.Context(), &paymentFraud)
 	if err != nil {
 		switch err {
 		default:
@@ -209,18 +217,19 @@ func (h *HttpWorkerAdapter) CheckPaymentFraudGrpc(rw http.ResponseWriter, req *h
 func (h *HttpWorkerAdapter) PayWithCheckFraud( rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("PayWithCheckFraud")
 
-	ctx, hdlspan := otel.Tracer("go-payment").Start(req.Context(),"handler.PayWithCheckFraud")
-	defer hdlspan.End()
+	span := lib.Span(req.Context(), "handler.payWithCheckFraud")	
+    defer span.End()
 
 	payment := core.Payment{}
 	err := json.NewDecoder(req.Body).Decode(&payment)
     if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
+		span.RecordError(err)
 		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
         return
     }
 
-	res, err := h.workerService.PayWithCheckFraud(ctx, payment)
+	res, err := h.workerService.PayWithCheckFraud(req.Context(), payment)
 	if err != nil {
 		switch err {
 			case erro.ErrNotFound:

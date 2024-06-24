@@ -3,16 +3,13 @@ package service
 import (
 	"context"
 	"encoding/json"
-
+	"github.com/go-payment/internal/lib"
 	"github.com/go-payment/internal/core"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
 	pb "github.com/golang/protobuf/proto"
 	proto "github.com/go-payment/internal/proto"
 	"github.com/golang/protobuf/jsonpb"
-
-	"go.opentelemetry.io/otel"
 )
 
 func ProtoToJSON(msg pb.Message) (string, error) {
@@ -33,8 +30,8 @@ func JSONToProto(data string, msg pb.Message) error {
 func (s WorkerService) GetPodInfoGrpc(ctx context.Context) (interface{}, error){
 	childLogger.Debug().Msg("GetInfoPodGrpc")
 
-	ctx, span := otel.Tracer("appName").Start(ctx,"svc.GetPodInfoGrpc")
-	defer span.End()
+	span := lib.Span(ctx, "service.getPodInfoGrpc")	
+    defer span.End()
 
 	header := metadata.New(map[string]string{"client-id": "client-001", "authorization": "Beared cookie"})
 	ctx = metadata.NewOutgoingContext(ctx, header)
@@ -45,11 +42,13 @@ func (s WorkerService) GetPodInfoGrpc(ctx context.Context) (interface{}, error){
 	response, err := client.GetPodInfo(ctx, data)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error not GetPodInfo")
+		span.RecordError(err)
 	  	return nil, err
 	}
 	response_str, err := ProtoToJSON(response)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error not ProtoToJSON")
+		span.RecordError(err)
 		return nil, err
   	}
 
@@ -57,6 +56,7 @@ func (s WorkerService) GetPodInfoGrpc(ctx context.Context) (interface{}, error){
 	err = json.Unmarshal([]byte(response_str), &result_final)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error Unmarshal")
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -68,6 +68,7 @@ func (s WorkerService) GetPodInfoGrpc(ctx context.Context) (interface{}, error){
 	jsonString, err := json.Marshal(result_filtered)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error Marshal")
+		span.RecordError(err)
 		return nil, err
 	}
 	json.Unmarshal(jsonString, &podInfo)
@@ -79,6 +80,9 @@ func (s WorkerService) GetPodInfoGrpc(ctx context.Context) (interface{}, error){
 
 func (s WorkerService) CheckPaymentFraudGrpc(ctx context.Context, paymentFraud *core.PaymentFraud) (interface{}, error){
 	childLogger.Debug().Msg("CheckPaymentFraudGrpc")
+
+	span := lib.Span(ctx, "service.checkPaymentFraudGrpc")	
+    defer span.End()
 
 	header := metadata.New(map[string]string{"client-id": "client-001", "authorization": "Beared cookie"})
 	ctx = metadata.NewOutgoingContext(ctx, header)
@@ -112,11 +116,13 @@ func (s WorkerService) CheckPaymentFraudGrpc(ctx context.Context, paymentFraud *
 	response, err := client.CheckPaymentFraud(ctx, data)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error not CheckPaymentFraud")
+		span.RecordError(err)
 	  	return nil, err
 	}
 	response_str, err := ProtoToJSON(response)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error not ProtoToJSON")
+		span.RecordError(err)
 		return nil, err
   	}
 
@@ -124,6 +130,7 @@ func (s WorkerService) CheckPaymentFraudGrpc(ctx context.Context, paymentFraud *
 	err = json.Unmarshal([]byte(response_str), &result_final)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error Unmarshal")
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -135,6 +142,7 @@ func (s WorkerService) CheckPaymentFraudGrpc(ctx context.Context, paymentFraud *
 	jsonString, err := json.Marshal(result_filtered)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error Marshal")
+		span.RecordError(err)
 		return nil, err
 	}
 	json.Unmarshal(jsonString, &parse_paymentFraud)

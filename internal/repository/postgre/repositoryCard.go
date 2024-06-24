@@ -3,21 +3,18 @@ package postgre
 import (
 	"context"
 	"errors"
-
 	_ "github.com/lib/pq"
-
 	"github.com/go-payment/internal/erro"
 	"github.com/go-payment/internal/core"
-
-	"go.opentelemetry.io/otel"
+	"github.com/go-payment/internal/lib"
 )
 
 func (w WorkerRepository) GetCard(ctx context.Context, card core.Card) (*core.Card, error){
 	childLogger.Debug().Msg("GetCard")
 	//childLogger.Debug().Interface("card: ",card).Msg("*****")
 
-	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Card.GetCard")
-	defer repospan.End()
+	span := lib.Span(ctx, "repo.getCard")	
+    defer span.End()
 
 	client:= w.databaseHelper.GetConnection()
 	
@@ -37,6 +34,7 @@ func (w WorkerRepository) GetCard(ctx context.Context, card core.Card) (*core.Ca
 											WHERE card_number =$1 `, card.CardNumber)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("SELECT statement")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
 	}
 
@@ -55,6 +53,7 @@ func (w WorkerRepository) GetCard(ctx context.Context, card core.Card) (*core.Ca
 						)
 		if err != nil {
 			childLogger.Error().Err(err).Msg("Scan statement")
+			span.RecordError(err)
 			return nil, errors.New(err.Error())
         }
 		return &result_query , nil
@@ -67,8 +66,8 @@ func (w WorkerRepository) GetCard(ctx context.Context, card core.Card) (*core.Ca
 func (w WorkerRepository) GetTerminal(ctx context.Context, terminal core.Terminal) (*core.Terminal, error){
 	childLogger.Debug().Msg("GetTerminal")
 
-	ctx, repospan := otel.Tracer("go-payment").Start(ctx,"repo.Card.GetTerminal")
-	defer repospan.End()
+	span := lib.Span(ctx, "repo.getTerminal")	
+    defer span.End()
 
 	client:= w.databaseHelper.GetConnection()
 	
@@ -84,6 +83,7 @@ func (w WorkerRepository) GetTerminal(ctx context.Context, terminal core.Termina
 											WHERE terminal_name =$1 `, terminal.Name)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("SELECT statement")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
 	}
 
@@ -98,6 +98,7 @@ func (w WorkerRepository) GetTerminal(ctx context.Context, terminal core.Termina
 						)
 		if err != nil {
 			childLogger.Error().Err(err).Msg("Scan statement")
+			span.RecordError(err)
 			return nil, errors.New(err.Error())
         }
 		return &result_query , nil

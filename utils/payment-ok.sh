@@ -59,11 +59,11 @@ declare -a arr_mcc
 arr_mcc=(PARKING BEVERAGE FOOD LAUNDRY CINEMA BOOK GIFT CASH GAS PET DRUG_STORE COSMETIC GYM STORE SPORTING COMPUTER MOTOR)
 # -----------------------------------------------------
 
-#domain=http://localhost:5007/payment/pay
+domain=http://localhost:5007/payment/pay
 #domain=https://97x38r33ag.execute-api.us-east-2.amazonaws.com/Live/payment/pay
 
-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2NvcGUiOlsiYWRtaW4iXSwiZXhwIjoxNzEzMjIxODc4fQ.XwRZgoCk-7pQNWVqR_Rbu5QHy3QfsnpbU0wc_482a_U
-domain=https://go-api-global.architecture.caradhras.io/payment/payment/pay
+#token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwic2NvcGUiOlsiYWRtaW4iXSwiZXhwIjoxNzEzMjIxODc4fQ.XwRZgoCk-7pQNWVqR_Rbu5QHy3QfsnpbU0wc_482a_U
+#domain=https://go-api-global.architecture.caradhras.io/payment/payment/pay
 
 min_model=0
 max_model=1
@@ -76,7 +76,7 @@ max_term=100
 echo "-------------------------------------"
 echo "-----------STARTING DAY---------------"
 echo "-------------------------------------"
-var_pan=111111000001
+var_pan=111000000001
 
 arr_mcc=(PARKING BEVERAGE FOOD LAUNDRY CINEMA BOOK GIFT CASH GAS PET DRUG_STORE COSMETIC GYM STORE SPORTING COMPUTER MOTOR)
 min_mcc=0 # start idx arr-mcc
@@ -91,7 +91,7 @@ max_tx_day=2 #max transaction per hour
 min_amount=20 # min amount transaction
 max_amount=800 # max amount transaction
 
-END_CC=999 # max credit card final number
+END_CC=2500 # max credit card final number
 
 min_start=3 # credit card start number
 max_start=100 # credit card skip number
@@ -159,7 +159,7 @@ do
                     
                 var_amount=$((var_amount * fraud_rate))
                     
-                #echo '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
+                echo '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
                 curl -X POST $domain --header "Authorization: Bearer $token" --header 'Content-Type: application/json' -d '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
             done
         done
@@ -238,7 +238,7 @@ do
 
                 var_amount=$((var_amount * fraud_rate))
 
-                #echo '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
+                echo '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
                 curl -X POST $domain --header "Authorization: Bearer $token" --header 'Content-Type: application/json' -d '{"terminal_name":"TERM-'$var_term'","card_number":"'$cc_final'","payment_at":"'${start_dt}'","card_type":"'${arr_type_card[var_type_card]}'","card_model":"'${arr_model_card[var_model_card]}'","currency":"BRL","mcc":"'${arr_mcc[var_type_mcc]}'","amount":'$var_amount',"fraud":'$var_fraud'}'
             done
         done

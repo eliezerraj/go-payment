@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/rs/zerolog/log"
 	"encoding/json"
+	"github.com/go-payment/internal/lib"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/go-payment/internal/core"
@@ -13,8 +14,6 @@ import (
 	"github.com/go-payment/internal/adapter/restapi"
 	"github.com/go-payment/internal/repository/postgre"
 	"github.com/go-payment/internal/adapter/grpc"
-	
-	"go.opentelemetry.io/otel"
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
@@ -54,8 +53,8 @@ func (s WorkerService) SetSessionVariable(ctx context.Context, userCredential st
 func (s WorkerService) Get(ctx context.Context, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Get")
 	
-	ctx, svcspan := otel.Tracer("go-payment").Start(ctx,"svc.Get")
-	defer svcspan.End()
+	span := lib.Span(ctx, "service.get")	
+    defer span.End()
 
 	res, err := s.workerRepository.Get(ctx, payment)
 	if err != nil {
@@ -68,15 +67,17 @@ func (s WorkerService) Get(ctx context.Context, payment core.Payment) (*core.Pay
 func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Pay")
 	
-	ctx, svcspan := otel.Tracer("go-payment").Start(ctx,"svc.Pay")
-	defer svcspan.End()
+	span := lib.Span(ctx, "service.pay")	
 
 	tx, err := s.workerRepository.StartTx(ctx)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	defer func() {
+		span.End()
+
 		if err != nil {
 			tx.Rollback()
 		} else {
@@ -92,6 +93,8 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	card.CardNumber = payment.CardNumber
 	res_interface_card, err := s.workerRepository.GetCard(ctx, card)
 	if err != nil {
+		childLogger.Error().Err(err).Msg("error workerRepository.GetCard")
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -99,6 +102,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	err = mapstructure.Decode(res_interface_card, &card_parsed)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
     }
 
@@ -107,12 +111,15 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	terminal.Name = payment.TerminalName
 	res_interface_term, err := s.workerRepository.GetTerminal(ctx,terminal)
 	if err != nil {
+		childLogger.Error().Err(err).Msg("error workerRepository.GetTerminal")
+		span.RecordError(err)
 		return nil, err
 	}
 	var terminal_parsed core.Terminal
 	err = mapstructure.Decode(res_interface_term, &terminal_parsed)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
     }
 
@@ -125,22 +132,27 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 												"/getId", 
 												strconv.Itoa(card_parsed.FkAccountID))
 	if err != nil {
+		childLogger.Error().Err(err).Msg("error restApiService.GetData")
+		span.RecordError(err)
 		return nil, err
 	}
 	var account_parsed core.Account
 	jsonString, err := json.Marshal(res_interface_acc)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error Marshal")
+		span.RecordError(err)
 		return nil, err
 	}
+
 	json.Unmarshal(jsonString, &account_parsed)
-	svcspan.AddEvent("Begin Transaction - lock")
+	span.AddEvent("Begin Transaction - lock")
 	
 	payment.FkCardID = card_parsed.ID
 	payment.FkTerminalId = terminal_parsed.ID
 	payment.Status = "PENDING"
 	res, err := s.workerRepository.Add(ctx, tx ,payment)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -153,12 +165,14 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 														"/fundBalanceAccount", 
 														account_parsed.AccountID)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	var account_balance_parsed core.AccountBalance
 	err = mapstructure.Decode(res_interface_data, &account_balance_parsed)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
     }
 
@@ -168,8 +182,10 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	} else {
 		res.Status = "APPROVED"
 	}
+	
 	res_update, err := s.workerRepository.Update(ctx, tx ,*res)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	if res_update == 0 {
@@ -177,7 +193,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 		return nil, err
 	}
 
-	svcspan.AddEvent("Release Transaction - unlock")
+	span.AddEvent("Release Transaction - unlock")
 
 	return res, nil
 }
@@ -185,8 +201,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("PayWithCheckFraud")
 	
-	ctx, svcspan := otel.Tracer("go-payment").Start(ctx,"svc.PayWithCheckFraud")
-	defer svcspan.End()
+	span := lib.Span(ctx, "service.payWithCheckFraud")	
 
 	tx, err := s.workerRepository.StartTx(ctx)
 	if err != nil {
@@ -194,6 +209,8 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	}
 
 	defer func() {
+		span.End()
+
 		if err != nil {
 			tx.Rollback()
 		} else {
@@ -209,6 +226,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	card.CardNumber = payment.CardNumber
 	res_interface_card, err := s.workerRepository.GetCard(ctx, card)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -216,6 +234,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	err = mapstructure.Decode(res_interface_card, &card_parsed)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
     }
 
@@ -224,12 +243,14 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	terminal.Name = payment.TerminalName
 	res_interface_term, err := s.workerRepository.GetTerminal(ctx,terminal)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	var terminal_parsed core.Terminal
 	err = mapstructure.Decode(res_interface_term, &terminal_parsed)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
     }
 
@@ -242,22 +263,25 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 												"/getId", 
 												strconv.Itoa(card_parsed.FkAccountID))
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	var account_parsed core.Account
 	jsonString, err := json.Marshal(res_interface_acc)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error Marshal")
+		span.RecordError(err)
 		return nil, err
 	}
 	json.Unmarshal(jsonString, &account_parsed)
-	svcspan.AddEvent("Begin Transaction - lock")
+	span.AddEvent("Begin Transaction - lock")
 	
 	payment.FkCardID = card_parsed.ID
 	payment.FkTerminalId = terminal_parsed.ID
 	payment.Status = "PENDING"
 	res, err := s.workerRepository.Add(ctx, tx ,payment)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -270,12 +294,14 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 												"/fundBalanceAccount", 
 												account_parsed.AccountID)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	var account_balance_parsed core.AccountBalance
 	err = mapstructure.Decode(res_interface_data, &account_balance_parsed)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
     }
 
@@ -314,6 +340,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	res_svc_fraud, err := s.CheckPaymentFraudGrpc(ctx, &payment_fraud)
     if err != nil {
 		childLogger.Error().Err(err).Msg("error CheckPaymentFraudGrpc")
+		span.RecordError(err)
 		return nil, errors.New(err.Error())
     }
 
@@ -321,6 +348,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	jsonString, err = json.Marshal(res_svc_fraud)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error Marshal")
+		span.RecordError(err)
 		return nil, err
 	}
 	json.Unmarshal(jsonString, &parse_paymentFraud)
@@ -336,6 +364,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 													"/payment/anomaly", 
 													payment_fraud)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	childLogger.Debug().Interface("*#########> res_interface_anomaly :", res_interface_anomaly).Msg("")
@@ -343,6 +372,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	jsonString, err = json.Marshal(res_interface_anomaly)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error Marshal")
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -365,7 +395,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 		return nil, err
 	}
 
-	svcspan.AddEvent("Release Transaction - unlock")
+	span.AddEvent("Release Transaction - unlock")
 
 	return res, nil
 }

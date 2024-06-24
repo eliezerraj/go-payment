@@ -26,6 +26,8 @@ type InfoPod struct {
 	IPAddress			string `json:"ip_address,omitempty"`
 	AvailabilityZone 	string `json:"availabilityZone,omitempty"`
 	IsAZ				bool   	`json:"is_az"`
+	Env					string `json:"enviroment,omitempty"`
+	AccountID			string `json:"account_id,omitempty"`
 }
 
 type Server struct {

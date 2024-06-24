@@ -46,7 +46,6 @@ func main(){
 	ctx, cancel := context.WithTimeout(	context.Background(), 
 										time.Duration( appServer.Server.ReadTimeout ) * time.Second)
 	defer cancel()
-
 	// Open Database
 	count := 1
 	var databaseHelper	postgre.DatabaseHelper
