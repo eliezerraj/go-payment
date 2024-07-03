@@ -60,40 +60,6 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	otel.SetTextMapPropagator(xray.Propagator{})
 	otel.SetTracerProvider(tp)
 
-	// --------------------- OLD -----------------//
-	/*childLogger.Info().Str("OTEL_EXPORTER_OTLP_ENDPOINT :", appServer.ConfigOTEL.OtelExportEndpoint).Msg("")
-
-	traceExporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(),
-												otlptracegrpc.WithEndpoint(appServer.ConfigOTEL.OtelExportEndpoint),
-											)
-	if err != nil {
-		childLogger.Error().Err(err).Msg("ERRO otlptracegrpc")
-	}
-	idg := xray.NewIDGenerator()
-
-	res := resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceNameKey.String("go-payment"),
-	)
-
-	tp := sdktrace.NewTracerProvider(
-									sdktrace.WithSampler(sdktrace.AlwaysSample()),
-									sdktrace.WithBatcher(traceExporter),
-									sdktrace.WithResource(res),
-									sdktrace.WithIDGenerator(idg),
-									)
-
-	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(xray.Propagator{})
-
-	defer func() { 
-		err = tp.Shutdown(ctx)
-		if err != nil{
-			childLogger.Error().Err(err).Msg("Erro closing OTEL tracer !!!")
-		}
-	}()*/
-	// ----------------------------------
-
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.Use(MiddleWareHandlerHeader)
 
