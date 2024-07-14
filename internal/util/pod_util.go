@@ -12,7 +12,6 @@ import(
 	"github.com/aws/aws-sdk-go-v2/config"
 
 	"github.com/go-payment/internal/core"
-
 )
 
 var childLogger = log.With().Str("util", "util").Logger()
@@ -47,7 +46,10 @@ func GetInfoPod() (	core.InfoPod,
 	} else {
 		infoPod.IsAZ = true
 	}
-
+	if os.Getenv("ENV") !=  "" {	
+		infoPod.Env = os.Getenv("ENV")
+	}
+	
 	// Get IP
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {

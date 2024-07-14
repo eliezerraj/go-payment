@@ -17,6 +17,7 @@ data:
   SETPOD_AZ: "false"
   TLS_ACCOUNT: "false"
   TLS_FRAUD: "false"
+  ENV: "dev"
 
   OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-02-xray-collector.default.svc.cluster.local:4317"
 
