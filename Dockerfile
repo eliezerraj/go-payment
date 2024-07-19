@@ -3,7 +3,7 @@
 
 FROM golang:1.22 As builder
 
-RUN apt-get update && apt-get install bash && apt-get install -y --no-install-recommends ca-certificates
+RUN apt-get update && apt-get install bash && apt-get install curl && apt-get install -y --no-install-recommends ca-certificates
 
 WORKDIR /app
 COPY . .

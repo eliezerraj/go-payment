@@ -58,15 +58,15 @@ spec:
           capabilities:
             drop:
             - ALL
-        #command:
-        #- /bin/sh
-        #- -c
-        #- |
-        #  while true; do
-        #    curl --location 'localhost:5007/auth'
-        #    date
-        #    sleep 1m
-        #  done 
+        command:
+        - /bin/sh
+        - -c
+        - |
+          while true; do
+            curl --location 'localhost:5007/auth'
+            date
+            sleep 1m
+          done 
         ports:
         - name: http
           containerPort: 5007
