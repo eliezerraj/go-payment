@@ -3,11 +3,10 @@
 
 FROM golang:1.22 As builder
 
-RUN apt-get update && apt-get install bash && apt-get install curl && apt-get install -y --no-install-recommends ca-certificates
-
 WORKDIR /app
-COPY . .
+RUN apt-get update && apt-get install bash && apt-get install -y curl && apt-get install -y --no-install-recommends ca-certificates
 
+COPY . .
 WORKDIR /app/cmd
 RUN go build -o go-payment -ldflags '-linkmode external -w -extldflags "-static"'
 

@@ -46,7 +46,6 @@ func GetDatabaseEnv() core.DatabaseRDS {
 		childLogger.Error().Err(err).Msg("Fatal erro get /var/pod/secret/password")
 		os.Exit(3)
 	}
-	
 	databaseRDS.User = string(file_user)
 	databaseRDS.Password = string(file_pass)
 

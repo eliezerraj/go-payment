@@ -151,4 +151,3 @@ func (s WorkerService) CheckPaymentFraudGrpc(ctx context.Context, paymentFraud *
 
 	return &parse_paymentFraud, nil
 }
-

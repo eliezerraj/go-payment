@@ -69,16 +69,14 @@ func main(){
 	}
 
 	repoDB := postgre.NewWorkerRepository(databaseHelper)
-	grpcClient, err  := grpc.StartGrpcClient(	appServer.RestEndpoint.GrpcHost,
-												appServer.RestEndpoint.CaCert)
+	grpcClient, err  := grpc.StartGrpcClient(appServer.RestEndpoint.GrpcHost, appServer.RestEndpoint.CaCert)
 	if err != nil {
 		log.Error().Err(err).Msg("Erro connect to grpc server")
 	}
 
-	restApiService	:= restapi.NewRestApiService()
+	restApiService	:= restapi.NewRestApiService(&appServer)
 
-	workerService := service.NewWorkerService(	&repoDB, appServer.RestEndpoint, restApiService, &grpcClient)
-
+	workerService 		:= service.NewWorkerService(&repoDB, &appServer, restApiService, &grpcClient)
 	httpWorkerAdapter 	:= handler.NewHttpWorkerAdapter(workerService, &appServer)
 	httpServer 			:= handler.NewHttpAppServer(appServer.Server)
 

@@ -20,20 +20,20 @@ var childLogger = log.With().Str("service", "service").Logger()
 
 type WorkerService struct {
 	workerRepository 		*postgre.WorkerRepository
-	restEndpoint			*core.RestEndpoint
+	appServer				*core.AppServer
 	restApiService			*restapi.RestApiService
 	grpcClient 				*grpc.GrpcClient
 }
 
-func NewWorkerService(	workerRepository 	*postgre.WorkerRepository,
-						restEndpoint		*core.RestEndpoint,
-						restApiService		*restapi.RestApiService,
-						grpcClient 			*grpc.GrpcClient) *WorkerService{
+func NewWorkerService(workerRepository *postgre.WorkerRepository,
+						appServer		*core.AppServer,
+						restApiService	*restapi.RestApiService,
+						grpcClient 		*grpc.GrpcClient) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
 		workerRepository:	workerRepository,
-		restEndpoint:		restEndpoint,
+		appServer:			appServer,
 		restApiService:		restApiService,
 		grpcClient: 		grpcClient,
 	}
@@ -54,26 +54,22 @@ func (s WorkerService) Auth(ctx context.Context, authUser core.AuthUser) (*core.
 	childLogger.Debug().Msg("Auth")
 
 	span := lib.Span(ctx, "service.auth")	
-    defer span.End()
+	defer span.End()
 
-	childLogger.Debug().Msg("Get")
-	res_interface, err := s.restApiService.PostData(ctx, 
-													s.restEndpoint.AuthUrlDomain,
-													"", //Just in case to call a NLB directly
-													"",
-													"/login", 
-													authUser)
+	path := s.appServer.RestEndpoint.AuthUrlDomain + "/login"
+	res_interface, err := s.restApiService.CallRestApi(ctx,	"POST",	path, nil ,authUser)
+
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
 	}
 	var auth_user_parsed core.AuthUser
 	err = mapstructure.Decode(res_interface, &auth_user_parsed)
-    if err != nil {
+	if err != nil {
 		childLogger.Error().Err(err).Msg("error parse interface")
 		span.RecordError(err)
 		return nil, errors.New(err.Error())
-    }
+	}
 
 	return &auth_user_parsed, nil
 }
@@ -153,13 +149,10 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
     }
 
 	// Get Account for Just for Check
-	res_interface_acc, err := s.restApiService.GetData(ctx, 
-												s.restEndpoint.ServiceUrlDomain,
-												s.restEndpoint.ServerHost,
-												s.restEndpoint.XApigwId,
-												*s.restEndpoint.CaCert,
-												"/getId", 
-												strconv.Itoa(card_parsed.FkAccountID))
+	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/getId/" + strconv.Itoa(card_parsed.FkAccountID)
+	x_apigw_api_id := s.appServer.RestEndpoint.XApigwId
+	res_interface_acc, err := s.restApiService.CallRestApi(ctx,	"GET", path, &x_apigw_api_id, nil)
+
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error restApiService.GetData")
 		span.RecordError(err)
@@ -186,17 +179,14 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	}
 
 	// Get Fund
-	res_interface_data, err := s.restApiService.GetData(ctx, 
-														s.restEndpoint.ServiceUrlDomain,
-														s.restEndpoint.ServerHost,
-														s.restEndpoint.XApigwId,
-														*s.restEndpoint.CaCert,
-														"/fundBalanceAccount", 
-														account_parsed.AccountID)
+	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + account_parsed.AccountID
+	x_apigw_api_id = s.appServer.RestEndpoint.XApigwId
+	res_interface_data, err := s.restApiService.CallRestApi(ctx,"GET", path, &x_apigw_api_id, nil)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
 	}
+
 	var account_balance_parsed core.AccountBalance
 	err = mapstructure.Decode(res_interface_data, &account_balance_parsed)
     if err != nil {
@@ -286,13 +276,17 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
     }
 
 	// Get Account for Just for Check
-	res_interface_acc, err := s.restApiService.GetData(ctx, 
-												s.restEndpoint.ServiceUrlDomain,
-												s.restEndpoint.ServerHost,
-												s.restEndpoint.XApigwId,
-												*s.restEndpoint.CaCert,
+	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/getId/" + strconv.Itoa(card_parsed.FkAccountID)
+	x_apigw_api_id := s.appServer.RestEndpoint.XApigwId
+	res_interface_acc, err := s.restApiService.CallRestApi(ctx,	"GET", path, &x_apigw_api_id, nil)
+
+	/*res_interface_acc, err := s.restApiService.GetData(ctx, 
+												s.appServer.RestEndpoint.ServiceUrlDomain,
+												s.appServer.RestEndpoint.ServerHost,
+												s.appServer.RestEndpoint.XApigwId,
+												*s.appServer.RestEndpoint.CaCert,
 												"/getId", 
-												strconv.Itoa(card_parsed.FkAccountID))
+												strconv.Itoa(card_parsed.FkAccountID))*/
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -317,13 +311,18 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	}
 
 	// Get Fund
-	res_interface_data, err := s.restApiService.GetData(ctx, 
-												s.restEndpoint.ServiceUrlDomain,
-												s.restEndpoint.ServerHost,
-												s.restEndpoint.XApigwId,
-												*s.restEndpoint.CaCert,
+		// Get Fund
+	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + account_parsed.AccountID
+	x_apigw_api_id = s.appServer.RestEndpoint.XApigwId
+	res_interface_data, err := s.restApiService.CallRestApi(ctx,"GET", path, &x_apigw_api_id, nil)
+
+	/*res_interface_data, err := s.restApiService.GetData(ctx, 
+												s.appServer.RestEndpoint.ServiceUrlDomain,
+												s.appServer.RestEndpoint.ServerHost,
+												s.appServer.RestEndpoint.XApigwId,
+												*s.appServer.RestEndpoint.CaCert,
 												"/fundBalanceAccount", 
-												account_parsed.AccountID)
+												account_parsed.AccountID)*/
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -389,9 +388,9 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 
 	// Get Payment ML Anomaly
 	res_interface_anomaly, err := s.restApiService.PostData(ctx, 
-													s.restEndpoint.GatewayMlHost,
-													s.restEndpoint.ServerHost, 
-													s.restEndpoint.XApigwIdMl,
+													s.appServer.RestEndpoint.GatewayMlHost,
+													s.appServer.RestEndpoint.ServerHost, 
+													s.appServer.RestEndpoint.XApigwIdMl,
 													"/payment/anomaly", 
 													payment_fraud)
 	if err != nil {

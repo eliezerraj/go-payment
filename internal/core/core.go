@@ -48,6 +48,7 @@ type RestEndpoint struct {
 	GrpcHost			string `json:"grpc_host,omitempty"`
 	ServerHost			string `json:"server_host_localhost,omitempty"`
 	AuthUrlDomain		string `json:"auth_url_domain,omitempty"`
+	Token				string `json:"token,omitempty"`	
 }
 
 type Cert struct {
