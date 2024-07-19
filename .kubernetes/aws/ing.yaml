@@ -8,6 +8,9 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/default-backend: "svc-go-payment"
+    nginx.ingress.kubernetes.io/auth-url: https://go-auth0.architecturedev.caradhras.io/validate
+    nginx.ingress.kubernetes.io/auth-method: POST
+    nginx.ingress.kubernetes.io/auth-request-headers: "Authorization"   
 spec:
   ingressClassName: nginx
   rules:

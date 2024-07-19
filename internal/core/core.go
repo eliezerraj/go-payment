@@ -16,6 +16,7 @@ type AppServer struct {
 	Server     		*Server     	`json:"server"`
 	Database		*DatabaseRDS	`json:"database"`
 	RestEndpoint	*RestEndpoint	`json:"rest_endpoint"`
+	AuthUser		*AuthUser		`json:"auth_user"`
 	ConfigOTEL		*ConfigOTEL		`json:"otel_config"`
 }
 
@@ -46,6 +47,7 @@ type RestEndpoint struct {
 	XApigwIdMl			string `json:"xApigwIdMl"`
 	GrpcHost			string `json:"grpc_host,omitempty"`
 	ServerHost			string `json:"server_host_localhost,omitempty"`
+	AuthUrlDomain		string `json:"auth_url_domain,omitempty"`
 }
 
 type Cert struct {
@@ -61,4 +63,10 @@ type ConfigOTEL struct {
 	ThreadsActiveUpperBound int64    `mapstructure:"RandomThreadsActiveUpperBound"`
 	CpuUsageUpperBound      int64    `mapstructure:"RandomCpuUsageUpperBound"`
 	SampleAppPorts          []string `mapstructure:"SampleAppPorts"`
+}
+
+type AuthUser struct {
+	User 		string `json:"user,omitempty"`
+	Password 	string `json:"password,omitempty"`
+	Token		string `json:"token,omitempty"`	
 }

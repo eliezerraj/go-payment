@@ -7,12 +7,27 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/gorilla/mux"
 
+	"github.com/go-payment/internal/service"
 	"github.com/go-payment/internal/core"
 	"github.com/go-payment/internal/erro"
 	"github.com/go-payment/internal/lib"
 )
 
 var childLogger = log.With().Str("handler", "handler").Logger()
+
+//-------------------------------------------
+type HttpWorkerAdapter struct {
+	workerService 	*service.WorkerService
+	appServer 		*core.AppServer
+}
+
+func NewHttpWorkerAdapter(workerService *service.WorkerService,	appServer *core.AppServer) HttpWorkerAdapter {
+	childLogger.Debug().Msg("NewHttpWorkerAdapter")
+	return HttpWorkerAdapter{
+		workerService: workerService,
+		appServer: appServer,
+	}
+}
 
 // Middleware v01
 func MiddleWareHandlerHeader(next http.Handler) http.Handler {
@@ -91,6 +106,36 @@ func (h *HttpWorkerAdapter) Header(rw http.ResponseWriter, req *http.Request) {
     defer span.End()
 
 	json.NewEncoder(rw).Encode(req.Header)
+	return
+}
+
+func (h *HttpWorkerAdapter) Auth(rw http.ResponseWriter, req *http.Request) {
+	childLogger.Debug().Msg("Auth")
+
+	span := lib.Span(req.Context(), "handler.auth")	
+    defer span.End()
+
+	authUser := core.AuthUser{}
+	authUser.User = h.appServer.AuthUser.User
+	authUser.Password = h.appServer.AuthUser.Password
+
+	res, err := h.workerService.Auth(req.Context(), authUser)
+	if err != nil {
+		switch err {
+			case erro.ErrNotFound:
+				rw.WriteHeader(404)
+				span.RecordError(err)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+			default:
+				rw.WriteHeader(500)
+				span.RecordError(err)
+				json.NewEncoder(rw).Encode(err.Error())
+				return
+			}
+	}
+
+	json.NewEncoder(rw).Encode(res)
 	return
 }
 

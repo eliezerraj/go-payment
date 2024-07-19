@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/go-payment/internal/service"
 	"github.com/go-payment/internal/lib"
 	"github.com/go-payment/internal/core"
 
@@ -20,17 +19,7 @@ import (
 	"go.opentelemetry.io/contrib/propagators/aws/xray"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
-//-------------------------------------------
-type HttpWorkerAdapter struct {
-	workerService 	*service.WorkerService
-}
 
-func NewHttpWorkerAdapter(workerService *service.WorkerService) HttpWorkerAdapter {
-	childLogger.Debug().Msg("NewHttpWorkerAdapter")
-	return HttpWorkerAdapter{
-		workerService: workerService,
-	}
-}
 //-------------------------------------------
 type HttpServer struct {
 	httpServer	*core.Server
@@ -42,9 +31,7 @@ func NewHttpAppServer(httpServer *core.Server) HttpServer {
 	return HttpServer{httpServer: httpServer }
 }
 //-------------------------------------------
-func (h HttpServer) StartHttpAppServer(	ctx context.Context, 
-										httpWorkerAdapter *HttpWorkerAdapter,
-										appServer *core.AppServer) {
+func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *HttpWorkerAdapter, appServer *core.AppServer) {
 	childLogger.Info().Msg("StartHttpAppServer")
 		
 	// ---------------------- OTEL ---------------
@@ -82,6 +69,10 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 
 	header := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
     header.HandleFunc("/header", httpWorkerAdapter.Header)
+
+	auth := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
+    auth.HandleFunc("/auth", httpWorkerAdapter.Auth)
+	auth.Use(otelmux.Middleware("go-payment"))
 
 	payPayment := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	payPayment.Handle("/payment/pay", 

@@ -27,8 +27,10 @@ func init(){
 	database := util.GetDatabaseEnv()
 	configOTEL := util.GetOtelEnv()
 	caCert := util.GetCaCertEnv()
+	authUser := util.GetAuthEnv()
 
 	appServer.InfoPod = &infoPod
+	appServer.AuthUser = &authUser
 	appServer.Database = &database
 	appServer.Server = &server
 	appServer.RestEndpoint = &restEndpoint
@@ -75,15 +77,10 @@ func main(){
 
 	restApiService	:= restapi.NewRestApiService()
 
-	workerService := service.NewWorkerService(	&repoDB, 
-												appServer.RestEndpoint,
-												restApiService, 
-												&grpcClient)
+	workerService := service.NewWorkerService(	&repoDB, appServer.RestEndpoint, restApiService, &grpcClient)
 
-	httpWorkerAdapter 	:= handler.NewHttpWorkerAdapter(workerService)
+	httpWorkerAdapter 	:= handler.NewHttpWorkerAdapter(workerService, &appServer)
 	httpServer 			:= handler.NewHttpAppServer(appServer.Server)
 
-	httpServer.StartHttpAppServer(	ctx, 
-									&httpWorkerAdapter,
-									&appServer)
+	httpServer.StartHttpAppServer(ctx, &httpWorkerAdapter, &appServer)
 }

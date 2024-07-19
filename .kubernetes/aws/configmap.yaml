@@ -28,6 +28,7 @@ data:
   X_APIGW_API_ID_ML_HOST: "3p27io6tsa"
 
   GRPC_HOST: "dns:///go-fraud.architecture.caradhras.io:50052"
+  AUTH_URL_DOMAIN: "https://go-login.architecture.caradhras.io/login"
 
   #SERVER_URL_DOMAIN: "https://go-account.architecture.caradhras.io" #Pulic
   #SERVER_URL_DOMAIN: "https://vpce-svc-acc-908671954593.architecture.caradhras.io" #vpce-03c99f9816dadaef7-s2c9mfvk.vpce-svc-07d64576b83d898d4.us-east-2.vpce.amazonaws.com

@@ -108,5 +108,9 @@ func GetInfoPod() (	core.InfoPod,
 		restEndpoint.ServerHost = os.Getenv("SERVER_HOST")
 	}
 
+	if os.Getenv("AUTH_URL_DOMAIN") !=  "" {	
+		restEndpoint.AuthUrlDomain = os.Getenv("AUTH_URL_DOMAIN")
+	}
+
 	return infoPod, server, restEndpoint
 }

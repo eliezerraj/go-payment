@@ -50,6 +50,34 @@ func (s WorkerService) SetSessionVariable(ctx context.Context, userCredential st
 	return res, nil
 }
 
+func (s WorkerService) Auth(ctx context.Context, authUser core.AuthUser) (*core.AuthUser, error){
+	childLogger.Debug().Msg("Auth")
+
+	span := lib.Span(ctx, "service.auth")	
+    defer span.End()
+
+	childLogger.Debug().Msg("Get")
+	res_interface, err := s.restApiService.PostData(ctx, 
+													s.restEndpoint.AuthUrlDomain,
+													"", //Just in case to call a NLB directly
+													"",
+													"/login", 
+													authUser)
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+	var auth_user_parsed core.AuthUser
+	err = mapstructure.Decode(res_interface, &auth_user_parsed)
+    if err != nil {
+		childLogger.Error().Err(err).Msg("error parse interface")
+		span.RecordError(err)
+		return nil, errors.New(err.Error())
+    }
+
+	return &auth_user_parsed, nil
+}
+
 func (s WorkerService) Get(ctx context.Context, payment core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Get")
 	
@@ -58,6 +86,7 @@ func (s WorkerService) Get(ctx context.Context, payment core.Payment) (*core.Pay
 
 	res, err := s.workerRepository.Get(ctx, payment)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -76,16 +105,16 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	}
 
 	defer func() {
-		span.End()
-
 		if err != nil {
 			tx.Rollback()
 		} else {
 			tx.Commit()
 		}
+		span.End()
 	}()
 
 	if (payment.CardType != "CREDIT") && (payment.CardType != "DEBIT") {
+		span.RecordError(erro.ErrCardTypeInvalid)
 		return nil, erro.ErrCardTypeInvalid
 	}
 	// Read Card
@@ -189,6 +218,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 		return nil, err
 	}
 	if res_update == 0 {
+		span.RecordError(erro.ErrUpdate)
 		err = erro.ErrUpdate
 		return nil, err
 	}
@@ -205,20 +235,21 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 
 	tx, err := s.workerRepository.StartTx(ctx)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 
 	defer func() {
-		span.End()
-
 		if err != nil {
 			tx.Rollback()
 		} else {
 			tx.Commit()
 		}
+		span.End()
 	}()
 
 	if (payment.CardType != "CREDIT") && (payment.CardType != "DEBIT") {
+		span.RecordError(erro.ErrCardTypeInvalid)
 		return nil, erro.ErrCardTypeInvalid
 	}
 	// Read Card
@@ -388,9 +419,11 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	}
 	res_update, err := s.workerRepository.Update(ctx, tx ,*res)
 	if err != nil {
+		span.RecordError(err)
 		return nil, err
 	}
 	if res_update == 0 {
+		span.RecordError(erro.ErrUpdate)
 		err = erro.ErrUpdate
 		return nil, err
 	}
