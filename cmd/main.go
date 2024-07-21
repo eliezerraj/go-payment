@@ -7,7 +7,7 @@ import(
 	"github.com/rs/zerolog/log"
 	"github.com/go-payment/internal/core"
 	"github.com/go-payment/internal/util"
-	"github.com/go-payment/internal/repository/postgre"
+	"github.com/go-payment/internal/repository/pg"
 	"github.com/go-payment/internal/service"
 	"github.com/go-payment/internal/adapter/restapi"
 	"github.com/go-payment/internal/handler"
@@ -50,10 +50,10 @@ func main(){
 	defer cancel()
 	// Open Database
 	count := 1
-	var databaseHelper	postgre.DatabaseHelper
+	var databasePG	pg.DatabasePG
 	var err error
 	for {
-		databaseHelper, err = postgre.NewDatabaseHelper(ctx, appServer.Database)
+		databasePG, err = pg.NewDatabasePGServer(ctx, appServer.Database)
 		if err != nil {
 			if count < 3 {
 				log.Error().Err(err).Msg("Erro open Database... trying again !!")
@@ -68,7 +68,7 @@ func main(){
 		break
 	}
 
-	repoDB := postgre.NewWorkerRepository(databaseHelper)
+	repoDB := pg.NewWorkerRepository(databasePG)
 	grpcClient, err  := grpc.StartGrpcClient(appServer.RestEndpoint.GrpcHost, appServer.RestEndpoint.CaCert)
 	if err != nil {
 		log.Error().Err(err).Msg("Erro connect to grpc server")

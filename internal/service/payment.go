@@ -12,27 +12,27 @@ import (
 	"github.com/go-payment/internal/core"
 	"github.com/go-payment/internal/erro"
 	"github.com/go-payment/internal/adapter/restapi"
-	"github.com/go-payment/internal/repository/postgre"
+	"github.com/go-payment/internal/repository/pg"
 	"github.com/go-payment/internal/adapter/grpc"
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
 
 type WorkerService struct {
-	workerRepository 		*postgre.WorkerRepository
-	appServer				*core.AppServer
-	restApiService			*restapi.RestApiService
-	grpcClient 				*grpc.GrpcClient
+	workerRepo		 	*pg.WorkerRepository
+	appServer			*core.AppServer
+	restApiService		*restapi.RestApiService
+	grpcClient 			*grpc.GrpcClient
 }
 
-func NewWorkerService(workerRepository *postgre.WorkerRepository,
-						appServer		*core.AppServer,
+func NewWorkerService(workerRepo	*pg.WorkerRepository,
+						appServer	*core.AppServer,
 						restApiService	*restapi.RestApiService,
-						grpcClient 		*grpc.GrpcClient) *WorkerService{
+						grpcClient 	*grpc.GrpcClient) *WorkerService{
 	childLogger.Debug().Msg("NewWorkerService")
 
 	return &WorkerService{
-		workerRepository:	workerRepository,
+		workerRepo:		 	workerRepo,
 		appServer:			appServer,
 		restApiService:		restApiService,
 		grpcClient: 		grpcClient,
@@ -42,7 +42,7 @@ func NewWorkerService(workerRepository *postgre.WorkerRepository,
 func (s WorkerService) SetSessionVariable(ctx context.Context, userCredential string) (bool, error){
 	childLogger.Debug().Msg("SetSessionVariable")
 
-	res, err := s.workerRepository.SetSessionVariable(ctx, userCredential)
+	res, err := s.workerRepo.SetSessionVariable(ctx, userCredential)
 	if err != nil {
 		return false, err
 	}
@@ -80,7 +80,7 @@ func (s WorkerService) Get(ctx context.Context, payment core.Payment) (*core.Pay
 	span := lib.Span(ctx, "service.get")	
     defer span.End()
 
-	res, err := s.workerRepository.Get(ctx, payment)
+	res, err := s.workerRepo.Get(ctx, payment)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -94,18 +94,18 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	
 	span := lib.Span(ctx, "service.pay")	
 
-	tx, err := s.workerRepository.StartTx(ctx)
+	tx, conn, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
-
+	
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback(ctx)
 		} else {
-			tx.Commit()
+			tx.Commit(ctx)
 		}
+		s.workerRepo.ReleaseTx(conn)
 		span.End()
 	}()
 
@@ -116,7 +116,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	// Read Card
 	card := core.Card{}
 	card.CardNumber = payment.CardNumber
-	res_interface_card, err := s.workerRepository.GetCard(ctx, card)
+	res_interface_card, err := s.workerRepo.GetCard(ctx, card)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error workerRepository.GetCard")
 		span.RecordError(err)
@@ -134,7 +134,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	// Read Terminal
 	terminal := core.Terminal{}
 	terminal.Name = payment.TerminalName
-	res_interface_term, err := s.workerRepository.GetTerminal(ctx,terminal)
+	res_interface_term, err := s.workerRepo.GetTerminal(ctx,terminal)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error workerRepository.GetTerminal")
 		span.RecordError(err)
@@ -150,8 +150,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 
 	// Get Account for Just for Check
 	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/getId/" + strconv.Itoa(card_parsed.FkAccountID)
-	x_apigw_api_id := s.appServer.RestEndpoint.XApigwId
-	res_interface_acc, err := s.restApiService.CallRestApi(ctx,	"GET", path, &x_apigw_api_id, nil)
+	res_interface_acc, err := s.restApiService.CallRestApi(ctx,	"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
 
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error restApiService.GetData")
@@ -172,7 +171,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	payment.FkCardID = card_parsed.ID
 	payment.FkTerminalId = terminal_parsed.ID
 	payment.Status = "PENDING"
-	res, err := s.workerRepository.Add(ctx, tx ,payment)
+	res, err := s.workerRepo.Add(ctx, tx ,payment)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -180,8 +179,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 
 	// Get Fund
 	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + account_parsed.AccountID
-	x_apigw_api_id = s.appServer.RestEndpoint.XApigwId
-	res_interface_data, err := s.restApiService.CallRestApi(ctx,"GET", path, &x_apigw_api_id, nil)
+	res_interface_data, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -202,7 +200,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 		res.Status = "APPROVED"
 	}
 	
-	res_update, err := s.workerRepository.Update(ctx, tx ,*res)
+	res_update, err := s.workerRepo.Update(ctx, tx ,*res)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -223,18 +221,18 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	
 	span := lib.Span(ctx, "service.payWithCheckFraud")	
 
-	tx, err := s.workerRepository.StartTx(ctx)
+	tx, conn, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
-
+	
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			tx.Rollback(ctx)
 		} else {
-			tx.Commit()
+			tx.Commit(ctx)
 		}
+		s.workerRepo.ReleaseTx(conn)
 		span.End()
 	}()
 
@@ -245,7 +243,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	// Read Card
 	card := core.Card{}
 	card.CardNumber = payment.CardNumber
-	res_interface_card, err := s.workerRepository.GetCard(ctx, card)
+	res_interface_card, err := s.workerRepo.GetCard(ctx, card)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -262,7 +260,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	// Read Terminal
 	terminal := core.Terminal{}
 	terminal.Name = payment.TerminalName
-	res_interface_term, err := s.workerRepository.GetTerminal(ctx,terminal)
+	res_interface_term, err := s.workerRepo.GetTerminal(ctx,terminal)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -277,16 +275,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 
 	// Get Account for Just for Check
 	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/getId/" + strconv.Itoa(card_parsed.FkAccountID)
-	x_apigw_api_id := s.appServer.RestEndpoint.XApigwId
-	res_interface_acc, err := s.restApiService.CallRestApi(ctx,	"GET", path, &x_apigw_api_id, nil)
-
-	/*res_interface_acc, err := s.restApiService.GetData(ctx, 
-												s.appServer.RestEndpoint.ServiceUrlDomain,
-												s.appServer.RestEndpoint.ServerHost,
-												s.appServer.RestEndpoint.XApigwId,
-												*s.appServer.RestEndpoint.CaCert,
-												"/getId", 
-												strconv.Itoa(card_parsed.FkAccountID))*/
+	res_interface_acc, err := s.restApiService.CallRestApi(ctx,	"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -304,25 +293,15 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	payment.FkCardID = card_parsed.ID
 	payment.FkTerminalId = terminal_parsed.ID
 	payment.Status = "PENDING"
-	res, err := s.workerRepository.Add(ctx, tx ,payment)
+	res, err := s.workerRepo.Add(ctx, tx ,payment)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
 	}
 
 	// Get Fund
-		// Get Fund
 	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + account_parsed.AccountID
-	x_apigw_api_id = s.appServer.RestEndpoint.XApigwId
-	res_interface_data, err := s.restApiService.CallRestApi(ctx,"GET", path, &x_apigw_api_id, nil)
-
-	/*res_interface_data, err := s.restApiService.GetData(ctx, 
-												s.appServer.RestEndpoint.ServiceUrlDomain,
-												s.appServer.RestEndpoint.ServerHost,
-												s.appServer.RestEndpoint.XApigwId,
-												*s.appServer.RestEndpoint.CaCert,
-												"/fundBalanceAccount", 
-												account_parsed.AccountID)*/
+	res_interface_data, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -338,7 +317,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	// Get Payment Feature for ML Fraud xgboost Grpc
 	payment_fraud := core.PaymentFraud{}
 	
-	res_pay_fraud, err := s.workerRepository.GetPaymentFraudFeature(ctx, payment)
+	res_pay_fraud, err := s.workerRepo.GetPaymentFraudFeature(ctx, payment)
 	if err != nil {
 		switch err {
 			case erro.ErrNotFound:
@@ -387,12 +366,14 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	res.Fraud = parse_paymentFraud.Fraud
 
 	// Get Payment ML Anomaly
-	res_interface_anomaly, err := s.restApiService.PostData(ctx, 
+	path = s.appServer.RestEndpoint.GatewayMlHost + "/payment/anomaly"
+	res_interface_anomaly, err := s.restApiService.CallRestApi(ctx,	"POST",	path, &s.appServer.RestEndpoint.XApigwIdMl,payment_fraud)
+	/*res_interface_anomaly, err := s.restApiService.PostData(ctx, 
 													s.appServer.RestEndpoint.GatewayMlHost,
 													s.appServer.RestEndpoint.ServerHost, 
 													s.appServer.RestEndpoint.XApigwIdMl,
 													"/payment/anomaly", 
-													payment_fraud)
+													payment_fraud)*/
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -416,7 +397,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	} else {
 		res.Status = "APPROVED"
 	}
-	res_update, err := s.workerRepository.Update(ctx, tx ,*res)
+	res_update, err := s.workerRepo.Update(ctx, tx ,*res)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
