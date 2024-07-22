@@ -134,7 +134,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	// Read Terminal
 	terminal := core.Terminal{}
 	terminal.Name = payment.TerminalName
-	res_interface_term, err := s.workerRepo.GetTerminal(ctx,terminal)
+	res_interface_term, err := s.workerRepo.GetTerminal(ctx, terminal)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error workerRepository.GetTerminal")
 		span.RecordError(err)
