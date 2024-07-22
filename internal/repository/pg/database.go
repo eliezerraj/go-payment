@@ -47,19 +47,19 @@ func Config(database_url string) (*pgxpool.Config) {
 	dbConfig.HealthCheckPeriod = defaultHealthCheckPeriod
 	dbConfig.ConnConfig.ConnectTimeout = defaultConnectTimeout
    
-	/*dbConfig.BeforeAcquire = func(ctx context.Context, c *pgx.Conn) bool {
-	 log.Println("Before acquiring the connection pool to the database!!")
-	 return true
+	dbConfig.BeforeAcquire = func(ctx context.Context, c *pgx.Conn) bool {
+		childLogger.Debug().Msg("Before acquiring connection pool !")
+	 	return true
 	}
    
 	dbConfig.AfterRelease = func(c *pgx.Conn) bool {
-	 log.Println("After releasing the connection pool to the database!!")
-	 return true
+		childLogger.Debug().Msg("After releasing connection pool !")
+	 	return true
 	}
    
 	dbConfig.BeforeClose = func(c *pgx.Conn) {
-	 log.Println("Closed the connection pool to the database!!")
-	}*/
+		childLogger.Debug().Msg("Closed connection pool !")
+	}
    
 	return dbConfig
 }
