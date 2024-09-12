@@ -14,11 +14,17 @@ import (
 
 	"github.com/go-payment/internal/lib"
 	"github.com/go-payment/internal/core"
+	"github.com/go-payment/internal/handler/utils/middleware"
+	"github.com/go-payment/internal/handler/controller"
+
+	"github.com/rs/zerolog/log"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/contrib/propagators/aws/xray"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
 )
+
+var childLogger = log.With().Str("handler", "server").Logger()
 
 //-------------------------------------------
 type HttpServer struct {
@@ -31,7 +37,7 @@ func NewHttpAppServer(httpServer *core.Server) HttpServer {
 	return HttpServer{httpServer: httpServer }
 }
 //-------------------------------------------
-func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *HttpWorkerAdapter, appServer *core.AppServer) {
+func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *controller.HttpWorkerAdapter, appServer *core.AppServer) {
 	childLogger.Info().Msg("StartHttpAppServer")
 		
 	// ---------------------- OTEL ---------------
@@ -48,7 +54,7 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *H
 	otel.SetTracerProvider(tp)
 
 	myRouter := mux.NewRouter().StrictSlash(true)
-	myRouter.Use(MiddleWareHandlerHeader)
+	myRouter.Use(middleware.MiddleWareHandlerHeader)
 
 	myRouter.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
 		childLogger.Debug().Msg("/")

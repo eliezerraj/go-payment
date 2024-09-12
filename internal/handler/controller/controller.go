@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (	
 	"strconv"
@@ -13,7 +13,7 @@ import (
 	"github.com/go-payment/internal/lib"
 )
 
-var childLogger = log.With().Str("handler", "handler").Logger()
+var childLogger = log.With().Str("handler", "controller").Logger()
 
 //-------------------------------------------
 type HttpWorkerAdapter struct {
@@ -29,27 +29,16 @@ func NewHttpWorkerAdapter(workerService *service.WorkerService,	appServer *core.
 	}
 }
 
-// Middleware v01
-func MiddleWareHandlerHeader(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		childLogger.Debug().Msg("-------------- MiddleWareHandlerHeader (INICIO)  --------------")
-	
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin, access-control-allow-headers")
+type APIError struct {
+	StatusCode	int  `json:"statusCode"`
+	Msg			any `json:"msg"`
+}
 
-		w.Header().Set("strict-transport-security","max-age=63072000; includeSubdomains; preloa")
-		w.Header().Set("content-security-policy","default-src 'none'; img-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; frame-ancestors 'none'")
-		w.Header().Set("x-content-type-option","nosniff")
-		w.Header().Set("x-frame-options","DENY")
-		w.Header().Set("x-xss-protection","1; mode=block")
-		w.Header().Set("referrer-policy","same-origin")
-		w.Header().Set("permission-policy","Content-Type,access-control-allow-origin, access-control-allow-headers")
-		
-		childLogger.Debug().Msg("-------------- MiddleWareHandlerHeader (FIM) ----------------")
-
-		next.ServeHTTP(w, r)
-	})
+func NewAPIError(statusCode int, err error) APIError {
+	return APIError{
+		StatusCode: statusCode,
+		Msg:		err.Error(),
+	}
 }
 
 // Middleware v02 - with decoratorDB
@@ -149,28 +138,26 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 	payment := core.Payment{}
 
 	varID, err := strconv.Atoi(vars["id"]) 
-    if err != nil { 
-		rw.WriteHeader(500)
-		span.RecordError(err)
-		json.NewEncoder(rw).Encode(erro.ErrInvalidId.Error())
+    if err != nil {
+		apiError := NewAPIError(400, erro.ErrInvalidId)
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
 		return
     } 
   
 	payment.ID = varID
 	res, err := h.workerService.Get(req.Context(), payment)
 	if err != nil {
+		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				rw.WriteHeader(404)
-				span.RecordError(err)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(404, err)
 			default:
-				rw.WriteHeader(500)
-				span.RecordError(err)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
-			}
+				apiError = NewAPIError(500, err)
+		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -186,24 +173,24 @@ func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 	payment := core.Payment{}
 	err := json.NewDecoder(req.Body).Decode(&payment)
     if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		span.RecordError(err)
-		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
-        return
+		apiError := NewAPIError(400, erro.ErrUnmarshal)
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
     }
 
 	res, err := h.workerService.Pay(req.Context(), payment)
 	if err != nil {
+		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				rw.WriteHeader(404)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(404, err)
 			default:
-				rw.WriteHeader(409)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(409, err)
 		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -218,12 +205,14 @@ func (h *HttpWorkerAdapter) GetPodInfoGrpc(rw http.ResponseWriter, req *http.Req
 
 	res, err := h.workerService.GetPodInfoGrpc(req.Context())
 	if err != nil {
+		var apiError APIError
 		switch err {
 			default:
-				rw.WriteHeader(500)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
-			}
+				apiError = NewAPIError(500, err)
+		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -239,20 +228,22 @@ func (h *HttpWorkerAdapter) CheckPaymentFraudGrpc(rw http.ResponseWriter, req *h
 	paymentFraud := core.PaymentFraud{}
 	err := json.NewDecoder(req.Body).Decode(&paymentFraud)
     if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		span.RecordError(err)
-		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
-        return
+		apiError := NewAPIError(400, erro.ErrUnmarshal)
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
     }
 
 	res, err := h.workerService.CheckPaymentFraudGrpc(req.Context(), &paymentFraud)
 	if err != nil {
+		var apiError APIError
 		switch err {
-		default:
-			rw.WriteHeader(500)
-			json.NewEncoder(rw).Encode(err.Error())
-			return
+			default:
+				apiError = NewAPIError(500, err)
 		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)
@@ -268,24 +259,24 @@ func (h *HttpWorkerAdapter) PayWithCheckFraud( rw http.ResponseWriter, req *http
 	payment := core.Payment{}
 	err := json.NewDecoder(req.Body).Decode(&payment)
     if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		span.RecordError(err)
-		json.NewEncoder(rw).Encode(erro.ErrUnmarshal.Error())
-        return
+		apiError := NewAPIError(400, erro.ErrUnmarshal)
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
     }
 
 	res, err := h.workerService.PayWithCheckFraud(req.Context(), payment)
 	if err != nil {
+		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				rw.WriteHeader(404)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(404, err)
 			default:
-				rw.WriteHeader(409)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(409, err)
 		}
+		rw.WriteHeader(apiError.StatusCode)
+		json.NewEncoder(rw).Encode(apiError)
+		return
 	}
 
 	json.NewEncoder(rw).Encode(res)

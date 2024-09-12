@@ -12,20 +12,20 @@ import (
 	"github.com/go-payment/internal/core"
 	"github.com/go-payment/internal/erro"
 	"github.com/go-payment/internal/adapter/restapi"
-	"github.com/go-payment/internal/repository/pg"
+	"github.com/go-payment/internal/repository/storage"
 	"github.com/go-payment/internal/adapter/grpc"
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
 
 type WorkerService struct {
-	workerRepo		 	*pg.WorkerRepository
+	workerRepo		 	*storage.WorkerRepository
 	appServer			*core.AppServer
 	restApiService		*restapi.RestApiService
 	grpcClient 			*grpc.GrpcClient
 }
 
-func NewWorkerService(workerRepo	*pg.WorkerRepository,
+func NewWorkerService(workerRepo	*storage.WorkerRepository,
 						appServer	*core.AppServer,
 						restApiService	*restapi.RestApiService,
 						grpcClient 	*grpc.GrpcClient) *WorkerService{
