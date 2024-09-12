@@ -74,7 +74,7 @@ func (s WorkerService) Auth(ctx context.Context, authUser core.AuthUser) (*core.
 	return &auth_user_parsed, nil
 }
 
-func (s WorkerService) Get(ctx context.Context, payment core.Payment) (*core.Payment, error){
+func (s WorkerService) Get(ctx context.Context, payment *core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Get")
 	
 	span := lib.Span(ctx, "service.get")	
@@ -89,7 +89,7 @@ func (s WorkerService) Get(ctx context.Context, payment core.Payment) (*core.Pay
 	return res, nil
 }
 
-func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Payment, error){
+func (s WorkerService) Pay(ctx context.Context, payment *core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Pay")
 	
 	span := lib.Span(ctx, "service.pay")	
@@ -116,7 +116,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	// Read Card
 	card := core.Card{}
 	card.CardNumber = payment.CardNumber
-	res_interface_card, err := s.workerRepo.GetCard(ctx, card)
+	res_interface_card, err := s.workerRepo.GetCard(ctx, &card)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error workerRepository.GetCard")
 		span.RecordError(err)
@@ -134,7 +134,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	// Read Terminal
 	terminal := core.Terminal{}
 	terminal.Name = payment.TerminalName
-	res_interface_term, err := s.workerRepo.GetTerminal(ctx, terminal)
+	res_interface_term, err := s.workerRepo.GetTerminal(ctx, &terminal)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error workerRepository.GetTerminal")
 		span.RecordError(err)
@@ -200,7 +200,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 		res.Status = "APPROVED"
 	}
 	
-	res_update, err := s.workerRepo.Update(ctx, tx ,*res)
+	res_update, err := s.workerRepo.Update(ctx, tx, res)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -216,7 +216,7 @@ func (s WorkerService) Pay(ctx context.Context, payment core.Payment) (*core.Pay
 	return res, nil
 }
 
-func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payment) (*core.Payment, error){
+func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment *core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("PayWithCheckFraud")
 	
 	span := lib.Span(ctx, "service.payWithCheckFraud")	
@@ -243,7 +243,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	// Read Card
 	card := core.Card{}
 	card.CardNumber = payment.CardNumber
-	res_interface_card, err := s.workerRepo.GetCard(ctx, card)
+	res_interface_card, err := s.workerRepo.GetCard(ctx, &card)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -260,7 +260,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	// Read Terminal
 	terminal := core.Terminal{}
 	terminal.Name = payment.TerminalName
-	res_interface_term, err := s.workerRepo.GetTerminal(ctx,terminal)
+	res_interface_term, err := s.workerRepo.GetTerminal(ctx, &terminal)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
@@ -397,7 +397,7 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment core.Payme
 	} else {
 		res.Status = "APPROVED"
 	}
-	res_update, err := s.workerRepo.Update(ctx, tx ,*res)
+	res_update, err := s.workerRepo.Update(ctx, tx, res)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err

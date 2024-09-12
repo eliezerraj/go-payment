@@ -108,7 +108,7 @@ func (w WorkerRepository) ReleaseTx(connection *pgxpool.Conn) {
 	defer connection.Release()
 }
 //---------------------------------------------------------------
-func (w WorkerRepository) GetCard(ctx context.Context, card core.Card) (*core.Card, error){
+func (w WorkerRepository) GetCard(ctx context.Context, card *core.Card) (*core.Card, error){
 	childLogger.Debug().Msg("GetCard")
 	//childLogger.Debug().Interface("card: ",card).Msg("*****")
 
@@ -170,7 +170,7 @@ func (w WorkerRepository) GetCard(ctx context.Context, card core.Card) (*core.Ca
 	return nil, erro.ErrNotFound
 }
 
-func (w WorkerRepository) GetTerminal(ctx context.Context, terminal core.Terminal) (*core.Terminal, error){
+func (w WorkerRepository) GetTerminal(ctx context.Context, terminal *core.Terminal) (*core.Terminal, error){
 	childLogger.Debug().Msg("GetTerminal")
 
 	span := lib.Span(ctx, "repo.getTerminal")	
@@ -223,7 +223,7 @@ func (w WorkerRepository) GetTerminal(ctx context.Context, terminal core.Termina
 	return nil, erro.ErrNotFound
 }
 //-------------------------------------------------------------------
-func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.Payment, error){
+func (w WorkerRepository) Get(ctx context.Context, payment *core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Get")
 
 	span := lib.Span(ctx, "repo.get")	
@@ -296,7 +296,7 @@ func (w WorkerRepository) Get(ctx context.Context, payment core.Payment) (*core.
 	return nil, erro.ErrNotFound
 }
 
-func (w WorkerRepository) Add(ctx context.Context, tx pgx.Tx, payment core.Payment) (*core.Payment, error){
+func (w WorkerRepository) Add(ctx context.Context, tx pgx.Tx, payment *core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Add")
 	childLogger.Debug().Interface("payment: ",payment).Msg("*****")
 
@@ -346,10 +346,10 @@ func (w WorkerRepository) Add(ctx context.Context, tx pgx.Tx, payment core.Payme
 	}
 
 	payment.ID = id
-	return &payment , nil
+	return payment , nil
 }
 
-func (w WorkerRepository) Update(ctx context.Context, tx pgx.Tx, payment core.Payment) (int64, error){
+func (w WorkerRepository) Update(ctx context.Context, tx pgx.Tx, payment *core.Payment) (int64, error){
 	childLogger.Debug().Msg("Update")
 
 	span := lib.Span(ctx, "repo.update")	
@@ -374,7 +374,7 @@ func (w WorkerRepository) Update(ctx context.Context, tx pgx.Tx, payment core.Pa
 	return row.RowsAffected(), nil
 }
 
-func (w WorkerRepository) GetPaymentFraudFeature(ctx context.Context, payment core.Payment) (*core.PaymentFraud, error){
+func (w WorkerRepository) GetPaymentFraudFeature(ctx context.Context, payment *core.Payment) (*core.PaymentFraud, error){
 	childLogger.Debug().Msg("GetPaymentFraudFeature")
 	childLogger.Debug().Interface("===>payment :", payment).Msg("")
 

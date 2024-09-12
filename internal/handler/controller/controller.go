@@ -146,7 +146,7 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
     } 
   
 	payment.ID = varID
-	res, err := h.workerService.Get(req.Context(), payment)
+	res, err := h.workerService.Get(req.Context(), &payment)
 	if err != nil {
 		var apiError APIError
 		switch err {
@@ -179,7 +179,7 @@ func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 		return
     }
 
-	res, err := h.workerService.Pay(req.Context(), payment)
+	res, err := h.workerService.Pay(req.Context(), &payment)
 	if err != nil {
 		var apiError APIError
 		switch err {
@@ -265,7 +265,7 @@ func (h *HttpWorkerAdapter) PayWithCheckFraud( rw http.ResponseWriter, req *http
 		return
     }
 
-	res, err := h.workerService.PayWithCheckFraud(req.Context(), payment)
+	res, err := h.workerService.PayWithCheckFraud(req.Context(), &payment)
 	if err != nil {
 		var apiError APIError
 		switch err {
