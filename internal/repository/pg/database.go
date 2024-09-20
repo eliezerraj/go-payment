@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-payment/internal/lib"
 	"github.com/go-payment/internal/core"
+
 	"github.com/rs/zerolog/log"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var childLogger = log.With().Str("repository.pg", "WorkerRepo").Logger()
+var childLogger = log.With().Str("repository.pg", "database").Logger()
 
 type DatabasePG interface {
 	GetConnection() (*pgxpool.Pool)
@@ -87,12 +89,16 @@ func NewDatabasePGServer(ctx context.Context, databaseRDS *core.DatabaseRDS) (Da
 
 func (d DatabasePGServer) Acquire(ctx context.Context) (*pgxpool.Conn, error) {
 	childLogger.Debug().Msg("Acquire")
+	
+	span := lib.Span(ctx, "database.Acquire")
+	defer span.End()
 
 	connection, err := d.connPool.Acquire(ctx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error while acquiring connection from the database pool!!")
 		return nil, err
 	} 
+
 	return connection, nil
 }
 

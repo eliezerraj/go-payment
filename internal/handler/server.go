@@ -83,7 +83,6 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *c
 	payPayment := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
 	payPayment.Handle("/payment/pay", 
 						http.HandlerFunc(httpWorkerAdapter.Pay),)
-	payPayment.Use(httpWorkerAdapter.DecoratorDB)
 	payPayment.Use(otelmux.Middleware("go-payment"))
 
 	getPayment := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()

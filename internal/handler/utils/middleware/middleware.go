@@ -1,6 +1,7 @@
 package middleware
 
-import (	
+import (
+	"context"	
 	"net/http"
 	"github.com/rs/zerolog/log"
 )
@@ -17,7 +18,6 @@ func MiddleWareHandlerHeader(next http.Handler) http.Handler {
 		} else {
 			log.Debug().Str("Headers : ", string(reqHeadersBytes) ).Msg("")
 		}
-
 		log.Debug().Str("Method : ", r.Method ).Msg("")
 		log.Debug().Str("URL : ", r.URL.Path ).Msg("")*/
 		//log.Println(r.Header.Get("Host"))
@@ -35,8 +35,10 @@ func MiddleWareHandlerHeader(next http.Handler) http.Handler {
 		w.Header().Set("referrer-policy","same-origin")
 		w.Header().Set("permission-policy","Content-Type,access-control-allow-origin, access-control-allow-headers")
 
+		ctx := context.WithValue(r.Context(), "tenant_id", string(r.Header.Get("tenant_id")))
+		
 		childLogger.Debug().Msg("-------------- MiddleWareHandlerHeader (FIM) ----------------")
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

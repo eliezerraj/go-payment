@@ -1,6 +1,6 @@
 package controller
 
-import (	
+import (
 	"strconv"
 	"net/http"
 	"encoding/json"
@@ -39,37 +39,6 @@ func NewAPIError(statusCode int, err error) APIError {
 		StatusCode: statusCode,
 		Msg:		err.Error(),
 	}
-}
-
-// Middleware v02 - with decoratorDB
-func (h *HttpWorkerAdapter) DecoratorDB(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		childLogger.Debug().Msg("-------------- Decorator - MiddleWareHandlerHeader (INICIO) --------------")
-	
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers","Content-Type,access-control-allow-origin, access-control-allow-headers")
-	
-		w.Header().Set("strict-transport-security","max-age=63072000; includeSubdomains; preloa")
-		w.Header().Set("content-security-policy","default-src 'none'; img-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; frame-ancestors 'none'")
-		w.Header().Set("x-content-type-option","nosniff")
-		w.Header().Set("x-frame-options","DENY")
-		w.Header().Set("x-xss-protection","1; mode=block")
-		w.Header().Set("referrer-policy","same-origin")
-		w.Header().Set("permission-policy","Content-Type,access-control-allow-origin, access-control-allow-headers")
-
-		// If the user was informed then insert it in the session
-		if string(r.Header.Get("client-id")) != "" {
-			h.workerService.SetSessionVariable(r.Context(),string(r.Header.Get("client-id")))
-		} else {
-			h.workerService.SetSessionVariable(r.Context(),"NO_INFORMED")
-		}
-
-		childLogger.Debug().Msg("-------------- Decorator- MiddleWareHandlerHeader (FIM) ----------------")
-
-		next.ServeHTTP(w, r)
-	})
 }
 
 func (h *HttpWorkerAdapter) Health(rw http.ResponseWriter, req *http.Request) {
@@ -171,6 +140,9 @@ func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
     defer span.End()
 
 	payment := core.Payment{}
+
+	payment.TenantID = req.Context().Value("tenant_id").(string)
+
 	err := json.NewDecoder(req.Body).Decode(&payment)
     if err != nil {
 		apiError := NewAPIError(400, erro.ErrUnmarshal)

@@ -29,70 +29,27 @@ func NewWorkerRepository(databasePG pg.DatabasePG) WorkerRepository {
 	}
 }
 //-----------------------------------------------
-func (w WorkerRepository) SetSessionVariable(ctx context.Context, userCredential string) (bool, error) {
-	childLogger.Debug().Msg("++++++++++++++++++++++++++++++++")
-	childLogger.Debug().Msg("SetSessionVariable")
-
-	conn, err := w.databasePG.Acquire(ctx)
-	if err != nil {
-		childLogger.Error().Err(err).Msg("Erro Acquire")
-		return false, errors.New(err.Error())
-	}
-	defer w.databasePG.Release(conn)
-	
-	_, err = conn.Query(ctx, "SET sess.user_credential to '" + userCredential+ "'")
-	if err != nil {
-		childLogger.Error().Err(err).Msg("SET SESSION statement ERROR")
-		return false, errors.New(err.Error())
-	}
-
-	return true, nil
-}
-
-func (w WorkerRepository) GetSessionVariable(ctx context.Context) (*string, error) {
-	childLogger.Debug().Msg("++++++++++++++++++++++++++++++++")
-	childLogger.Debug().Msg("GetSessionVariable")
-
-	conn, err := w.databasePG.Acquire(ctx)
-	if err != nil {
-		childLogger.Error().Err(err).Msg("Erro Acquire")
-		return nil, errors.New(err.Error())
-	}
-	defer w.databasePG.Release(conn)
-
-	var res_balance string
-	rows, err := conn.Query(ctx, "SELECT current_setting('sess.user_credential')" )
-	if err != nil {
-		childLogger.Error().Err(err).Msg("Prepare statement")
-		return nil, errors.New(err.Error())
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		err := rows.Scan(&res_balance)
-		if err != nil {
-			childLogger.Error().Err(err).Msg("Scan statement")
-			return nil, errors.New(err.Error())
-        }
-		return &res_balance, nil
-	}
-
-	return nil, erro.ErrNotFound
-}
-
 func (w WorkerRepository) StartTx(ctx context.Context) (pgx.Tx, *pgxpool.Conn, error) {
 	childLogger.Debug().Msg("StartTx")
 
-	span := lib.Span(ctx, "repo.StartTx")
+	span := lib.Span(ctx, "storage.StartTx")
 	defer span.End()
 
-	span = lib.Span(ctx, "repo.Acquire")
 	conn, err := w.databasePG.Acquire(ctx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Erro Acquire")
 		return nil, nil, errors.New(err.Error())
 	}
-	span.End()
+
+	tenant := ctx.Value("tenant_id").(string)
+	res_rls, err := w.SetSessionRLS(ctx, conn, tenant)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Erro SetSessionRLS")
+		return nil, nil, errors.New(err.Error())
+	}
+	if res_rls != true{
+		childLogger.Error().Err(err).Msg("using RLS error !!!")
+	}
 
 	tx, err := conn.Begin(ctx)
     if err != nil {
@@ -107,21 +64,33 @@ func (w WorkerRepository) ReleaseTx(connection *pgxpool.Conn) {
 
 	defer connection.Release()
 }
+
+func (w WorkerRepository) SetSessionRLS(ctx context.Context, conn *pgxpool.Conn, userCredential string) (bool, error) {
+	childLogger.Debug().Msg("++++++++++++++++++++++++++++++++")
+	childLogger.Debug().Msg("SetSessionRLS")
+	
+	rows, err := conn.Query(ctx, "SET app.current_tenant = '" + userCredential+ "'")
+	if err != nil {
+		childLogger.Error().Err(err).Msg("SET SESSION statement ERROR")
+		return false, errors.New(err.Error())
+	}
+	for rows.Next() {
+	}
+	return true, nil
+}
 //---------------------------------------------------------------
 func (w WorkerRepository) GetCard(ctx context.Context, card *core.Card) (*core.Card, error){
 	childLogger.Debug().Msg("GetCard")
 	//childLogger.Debug().Interface("card: ",card).Msg("*****")
 
-	span := lib.Span(ctx, "repo.getCard")	
+	span := lib.Span(ctx, "storage.getCard")	
     defer span.End()
 
-	span = lib.Span(ctx, "repo.Acquire")
 	conn, err := w.databasePG.Acquire(ctx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Erro Acquire")
 		return nil, errors.New(err.Error())
 	}
-	span.End()
 	defer w.databasePG.Release(conn)
 
 	result_query := core.Card{}
@@ -173,16 +142,14 @@ func (w WorkerRepository) GetCard(ctx context.Context, card *core.Card) (*core.C
 func (w WorkerRepository) GetTerminal(ctx context.Context, terminal *core.Terminal) (*core.Terminal, error){
 	childLogger.Debug().Msg("GetTerminal")
 
-	span := lib.Span(ctx, "repo.getTerminal")	
+	span := lib.Span(ctx, "storage.getTerminal")	
     defer span.End()
 
-	span = lib.Span(ctx, "repo.Acquire")
 	conn, err := w.databasePG.Acquire(ctx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Erro Acquire")
 		return nil, errors.New(err.Error())
 	}
-	span.End()
 	defer w.databasePG.Release(conn)
 	
 	result_query := core.Terminal{}
@@ -226,17 +193,25 @@ func (w WorkerRepository) GetTerminal(ctx context.Context, terminal *core.Termin
 func (w WorkerRepository) Get(ctx context.Context, payment *core.Payment) (*core.Payment, error){
 	childLogger.Debug().Msg("Get")
 
-	span := lib.Span(ctx, "repo.get")	
+	span := lib.Span(ctx, "storage.get")	
     defer span.End()
 
-	span = lib.Span(ctx, "repo.Acquire")
 	conn, err := w.databasePG.Acquire(ctx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Erro Acquire")
 		return nil, errors.New(err.Error())
 	}
-	span.End()
 	defer w.databasePG.Release(conn)
+
+	tenant := ctx.Value("tenant_id").(string)
+	res_rls, err := w.SetSessionRLS(ctx, conn, tenant)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("Erro SetSessionRLS")
+		return nil, errors.New(err.Error())
+	}
+	if res_rls != true{
+		childLogger.Error().Err(err).Msg("using RLS error !!!")
+	}
 	
 	result_query := core.Payment{}
 	query := `SELECT id, 
@@ -300,7 +275,7 @@ func (w WorkerRepository) Add(ctx context.Context, tx pgx.Tx, payment *core.Paym
 	childLogger.Debug().Msg("Add")
 	childLogger.Debug().Interface("payment: ",payment).Msg("*****")
 
-	span := lib.Span(ctx, "repo.add")	
+	span := lib.Span(ctx, "storage.add")	
     defer span.End()
 
 	query := `INSERT INTO payment (fk_card_id, 
@@ -352,7 +327,7 @@ func (w WorkerRepository) Add(ctx context.Context, tx pgx.Tx, payment *core.Paym
 func (w WorkerRepository) Update(ctx context.Context, tx pgx.Tx, payment *core.Payment) (int64, error){
 	childLogger.Debug().Msg("Update")
 
-	span := lib.Span(ctx, "repo.update")	
+	span := lib.Span(ctx, "storage.update")	
     defer span.End()
 	
 	query := `update payment
@@ -378,16 +353,14 @@ func (w WorkerRepository) GetPaymentFraudFeature(ctx context.Context, payment *c
 	childLogger.Debug().Msg("GetPaymentFraudFeature")
 	childLogger.Debug().Interface("===>payment :", payment).Msg("")
 
-	span := lib.Span(ctx, "repo.getPaymentFraudFeature")	
+	span := lib.Span(ctx, "storage.getPaymentFraudFeature")	
     defer span.End()
 
-	span = lib.Span(ctx, "repo.Acquire")
 	conn, err := w.databasePG.Acquire(ctx)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Erro Acquire")
 		return nil, errors.New(err.Error())
 	}
-	span.End()
 	defer w.databasePG.Release(conn)
 
 	result_query := core.PaymentFraud{}
