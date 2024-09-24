@@ -4,6 +4,8 @@ import (
 	"context"	
 	"net/http"
 	"github.com/rs/zerolog/log"
+
+	"github.com/go-payment/internal/handler/controller"
 )
 
 var childLogger = log.With().Str("handler.utils", "middleware").Logger()
@@ -41,4 +43,16 @@ func MiddleWareHandlerHeader(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+type apiFunc func(w http.ResponseWriter, r *http.Request) error
+
+func MiddleWareErrorHandler(h apiFunc) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		 if err := h(rw, req); err != nil {
+			if e, ok := err.(controller.APIError); ok{
+				controller.WriteJSON(rw, e.StatusCode, e)
+			}
+		 }
+	 }
 }

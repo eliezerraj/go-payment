@@ -31,7 +31,11 @@ func NewHttpWorkerAdapter(workerService *service.WorkerService,	appServer *core.
 
 type APIError struct {
 	StatusCode	int  `json:"statusCode"`
-	Msg			any `json:"msg"`
+	Msg			string `json:"msg"`
+}
+
+func (e APIError) Error() string {
+	return e.Msg
 }
 
 func NewAPIError(statusCode int, err error) APIError {
@@ -41,12 +45,16 @@ func NewAPIError(statusCode int, err error) APIError {
 	}
 }
 
+func WriteJSON(rw http.ResponseWriter, code int, v any) error{
+	rw.WriteHeader(code)
+	return json.NewEncoder(rw).Encode(v)
+}
+
 func (h *HttpWorkerAdapter) Health(rw http.ResponseWriter, req *http.Request) {
 	childLogger.Debug().Msg("Health")
 
 	health := true
 	json.NewEncoder(rw).Encode(health)
-	return
 }
 
 func (h *HttpWorkerAdapter) Live(rw http.ResponseWriter, req *http.Request) {
@@ -54,7 +62,6 @@ func (h *HttpWorkerAdapter) Live(rw http.ResponseWriter, req *http.Request) {
 
 	live := true
 	json.NewEncoder(rw).Encode(live)
-	return
 }
 
 func (h *HttpWorkerAdapter) Header(rw http.ResponseWriter, req *http.Request) {
@@ -64,10 +71,9 @@ func (h *HttpWorkerAdapter) Header(rw http.ResponseWriter, req *http.Request) {
     defer span.End()
 
 	json.NewEncoder(rw).Encode(req.Header)
-	return
 }
 
-func (h *HttpWorkerAdapter) Auth(rw http.ResponseWriter, req *http.Request) {
+func (h *HttpWorkerAdapter) Auth(rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("Auth")
 
 	span := lib.Span(req.Context(), "handler.auth")	
@@ -79,25 +85,20 @@ func (h *HttpWorkerAdapter) Auth(rw http.ResponseWriter, req *http.Request) {
 
 	res, err := h.workerService.Auth(req.Context(), authUser)
 	if err != nil {
+		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				rw.WriteHeader(404)
-				span.RecordError(err)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
+				apiError = NewAPIError(http.StatusNotFound, err)
 			default:
-				rw.WriteHeader(500)
-				span.RecordError(err)
-				json.NewEncoder(rw).Encode(err.Error())
-				return
-			}
+				apiError = NewAPIError(http.StatusInternalServerError, err)
+		}
+		return apiError
 	}
 
-	json.NewEncoder(rw).Encode(res)
-	return
+	return WriteJSON(rw, http.StatusOK, res)
 }
 
-func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
+func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("Get")
 
 	span := lib.Span(req.Context(), "handler.get")	
@@ -108,10 +109,8 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 
 	varID, err := strconv.Atoi(vars["id"]) 
     if err != nil {
-		apiError := NewAPIError(400, erro.ErrInvalidId)
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		apiError := NewAPIError(http.StatusBadRequest, erro.ErrInvalidId)
+		return apiError
     } 
   
 	payment.ID = varID
@@ -120,20 +119,17 @@ func (h *HttpWorkerAdapter) Get(rw http.ResponseWriter, req *http.Request) {
 		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				apiError = NewAPIError(404, err)
+				apiError = NewAPIError(http.StatusNotFound, err)
 			default:
-				apiError = NewAPIError(500, err)
+				apiError = NewAPIError(http.StatusInternalServerError, err)
 		}
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		return apiError
 	}
 
-	json.NewEncoder(rw).Encode(res)
-	return
+	return WriteJSON(rw, http.StatusOK, res)
 }
 
-func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
+func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("Pay")
 
 	span := lib.Span(req.Context(), "handler.pay")	
@@ -145,10 +141,8 @@ func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 
 	err := json.NewDecoder(req.Body).Decode(&payment)
     if err != nil {
-		apiError := NewAPIError(400, erro.ErrUnmarshal)
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		apiError := NewAPIError(http.StatusBadRequest, erro.ErrUnmarshal)
+		return apiError
     }
 
 	res, err := h.workerService.Pay(req.Context(), &payment)
@@ -156,20 +150,17 @@ func (h *HttpWorkerAdapter) Pay( rw http.ResponseWriter, req *http.Request) {
 		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				apiError = NewAPIError(404, err)
+				apiError = NewAPIError(http.StatusNotFound, err)
 			default:
-				apiError = NewAPIError(409, err)
+				apiError = NewAPIError(http.StatusInternalServerError, err)
 		}
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		return apiError
 	}
 
-	json.NewEncoder(rw).Encode(res)
-	return
+	return WriteJSON(rw, http.StatusOK, res)
 }
 
-func (h *HttpWorkerAdapter) GetPodInfoGrpc(rw http.ResponseWriter, req *http.Request) {
+func (h *HttpWorkerAdapter) GetPodInfoGrpc(rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("GetPodInfoGrpc")
 
 	span := lib.Span(req.Context(), "handler.getPodInfoGrpc")	
@@ -180,18 +171,15 @@ func (h *HttpWorkerAdapter) GetPodInfoGrpc(rw http.ResponseWriter, req *http.Req
 		var apiError APIError
 		switch err {
 			default:
-				apiError = NewAPIError(500, err)
+				apiError = NewAPIError(http.StatusInternalServerError, err)
 		}
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		return apiError
 	}
 
-	json.NewEncoder(rw).Encode(res)
-	return
+	return WriteJSON(rw, http.StatusOK, res)
 }
 
-func (h *HttpWorkerAdapter) CheckPaymentFraudGrpc(rw http.ResponseWriter, req *http.Request) {
+func (h *HttpWorkerAdapter) CheckPaymentFraudGrpc(rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("CheckPaymentFraudGrpc")
 
 	span := lib.Span(req.Context(), "handler.checkPaymentFraudGrpc")	
@@ -200,10 +188,8 @@ func (h *HttpWorkerAdapter) CheckPaymentFraudGrpc(rw http.ResponseWriter, req *h
 	paymentFraud := core.PaymentFraud{}
 	err := json.NewDecoder(req.Body).Decode(&paymentFraud)
     if err != nil {
-		apiError := NewAPIError(400, erro.ErrUnmarshal)
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		apiError := NewAPIError(http.StatusBadRequest, erro.ErrUnmarshal)
+		return apiError
     }
 
 	res, err := h.workerService.CheckPaymentFraudGrpc(req.Context(), &paymentFraud)
@@ -211,18 +197,15 @@ func (h *HttpWorkerAdapter) CheckPaymentFraudGrpc(rw http.ResponseWriter, req *h
 		var apiError APIError
 		switch err {
 			default:
-				apiError = NewAPIError(500, err)
+				apiError = NewAPIError(http.StatusInternalServerError, err)
 		}
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		return apiError
 	}
 
-	json.NewEncoder(rw).Encode(res)
-	return
+	return WriteJSON(rw, http.StatusOK, res)
 }
 
-func (h *HttpWorkerAdapter) PayWithCheckFraud( rw http.ResponseWriter, req *http.Request) {
+func (h *HttpWorkerAdapter) PayWithCheckFraud( rw http.ResponseWriter, req *http.Request) error {
 	childLogger.Debug().Msg("PayWithCheckFraud")
 
 	span := lib.Span(req.Context(), "handler.payWithCheckFraud")	
@@ -231,10 +214,8 @@ func (h *HttpWorkerAdapter) PayWithCheckFraud( rw http.ResponseWriter, req *http
 	payment := core.Payment{}
 	err := json.NewDecoder(req.Body).Decode(&payment)
     if err != nil {
-		apiError := NewAPIError(400, erro.ErrUnmarshal)
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		apiError := NewAPIError(http.StatusBadRequest, erro.ErrUnmarshal)
+		return apiError
     }
 
 	res, err := h.workerService.PayWithCheckFraud(req.Context(), &payment)
@@ -242,15 +223,12 @@ func (h *HttpWorkerAdapter) PayWithCheckFraud( rw http.ResponseWriter, req *http
 		var apiError APIError
 		switch err {
 			case erro.ErrNotFound:
-				apiError = NewAPIError(404, err)
+				apiError = NewAPIError(http.StatusNotFound, err)
 			default:
-				apiError = NewAPIError(409, err)
+				apiError = NewAPIError(http.StatusInternalServerError, err)
 		}
-		rw.WriteHeader(apiError.StatusCode)
-		json.NewEncoder(rw).Encode(apiError)
-		return
+		return apiError
 	}
 
-	json.NewEncoder(rw).Encode(res)
-	return
+	return WriteJSON(rw, http.StatusOK, res)
 }

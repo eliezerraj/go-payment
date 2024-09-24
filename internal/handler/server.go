@@ -77,32 +77,27 @@ func (h HttpServer) StartHttpAppServer(ctx context.Context, httpWorkerAdapter *c
     header.HandleFunc("/header", httpWorkerAdapter.Header)
 
 	auth := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
-    auth.HandleFunc("/auth", httpWorkerAdapter.Auth)
+    auth.HandleFunc("/auth", middleware.MiddleWareErrorHandler(httpWorkerAdapter.Auth))
 	auth.Use(otelmux.Middleware("go-payment"))
 
 	payPayment := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-	payPayment.Handle("/payment/pay", 
-						http.HandlerFunc(httpWorkerAdapter.Pay),)
+	payPayment.HandleFunc("/payment/pay",middleware.MiddleWareErrorHandler(httpWorkerAdapter.Pay))
 	payPayment.Use(otelmux.Middleware("go-payment"))
 
 	getPayment := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
-	getPayment.Handle("/payment/get/{id}", 
-						http.HandlerFunc(httpWorkerAdapter.Get),)
+	getPayment.HandleFunc("/payment/get/{id}", middleware.MiddleWareErrorHandler(httpWorkerAdapter.Get))
 	getPayment.Use(otelmux.Middleware("go-payment"))
 
 	podGrpc := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
-    podGrpc.Handle("/getPodInfoGrpc", 
-					http.HandlerFunc(httpWorkerAdapter.GetPodInfoGrpc),)
+    podGrpc.HandleFunc("/getPodInfoGrpc", middleware.MiddleWareErrorHandler(httpWorkerAdapter.GetPodInfoGrpc))
 	podGrpc.Use(otelmux.Middleware("go-payment"))
 
 	paymentFraudGrpc := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-    paymentFraudGrpc.Handle("/checkPaymentFraudGrpc", 
-					http.HandlerFunc(httpWorkerAdapter.CheckPaymentFraudGrpc),)
+    paymentFraudGrpc.HandleFunc("/checkPaymentFraudGrpc", 	middleware.MiddleWareErrorHandler(httpWorkerAdapter.CheckPaymentFraudGrpc))
 	paymentFraudGrpc.Use(otelmux.Middleware("go-payment"))
 
 	paymentFraudFeature := myRouter.Methods(http.MethodPost, http.MethodOptions).Subrouter()
-    paymentFraudFeature.Handle("/payment/payWithCheckFraud", 
-					http.HandlerFunc(httpWorkerAdapter.PayWithCheckFraud),)
+    paymentFraudFeature.HandleFunc("/payment/payWithCheckFraud",middleware.MiddleWareErrorHandler(httpWorkerAdapter.PayWithCheckFraud))
 	paymentFraudFeature.Use(otelmux.Middleware("go-payment"))
 
 	srv := http.Server{
