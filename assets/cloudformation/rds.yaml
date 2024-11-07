@@ -1,0 +1,189 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: RDS 
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - hml
+      - prd
+  SecurityGroupRDS:
+    Type: String
+    Default: sg-0eec7b010b760677d
+  DBParameterGroupName:
+    Type: String
+    Default: dock-pg16
+  SubnetDBGroupGroupName:
+    Type: String
+    Default: db-subnet-group-rds
+  RDSPostgreName:
+    Type: String
+    Default: db-arch-02
+  RDSDBName:
+    Type: String
+    Default: postgres
+  InstanceName:
+    Type: String
+    Default: db-arch-02
+  MasterUserName:
+    Type: String
+    Default: postgres
+  MasterUserPasswordName:
+    Type: String
+    Default: postgres
+  Squad:
+    Type: String
+    Default: architecture
+  isMultiAZ:
+    Description: Multi AZ
+    Type: "String"
+    Default: "False"
+    AllowedValues:
+      - "True"
+      - "False"
+  StorageEncrypted:
+    Type: "String"
+    Default: "True"
+    AllowedValues:
+      - "True"
+      - "False"
+  EnablePerformanceInsights:
+    Type: "String"
+    Default: false
+    AllowedValues:
+      - true
+      - false  
+  EnableEnhancedMonitoring:
+    Description: 'Provide metrics in real time for the operating system (OS) that your DB instance runs on.'
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false  
+
+Conditions:
+  HasEnhancedMonitoring: !Equals [ !Ref EnableEnhancedMonitoring, 'true' ]
+
+Mappings:
+  SubnetIds:
+    dev:
+      SubnetAZA: subnet-04f9462620240c5c1
+      SubnetAZB: subnet-00c7176f1c6f72c32
+      SubnetAZC: subnet-0961dd9a7d368e1b0
+    hml:
+      SubnetAZA: subnet-0fb3b86a8657a696f
+      SubnetAZB: subnet-0fb6727ed0041b799
+      SubnetAZC: subnet-0c45c1b6d9ba2cfc5
+    prd:
+      SubnetAZA: subnet-0a0c6c1b76845ca8a
+      SubnetAZB: subnet-0d2dc2da1fb208470
+      SubnetAZC: subnet-0446d425f47765e5b
+
+  #SecretManagerRDS:
+  #  dev:
+  #    RDSSecretManagerArn: "arn:aws:secretsmanager:us-east-2:792192516784:secret:992382474575_arch-rds-02-access-ncEwuy:password"
+  #  hml:
+  #    RDSSecretManagerArn: "arn:aws:secretsmanager:us-east-2:792192516784:secret:992382474575_arch-rds-02-access-ncEwuy:password"
+  #  prd:
+  #    RDSSecretManagerArn: "arn:aws:secretsmanager:us-east-2:792192516784:secret:992382474575_arch-rds-02-access-ncEwuy:password"
+
+Resources:
+  SubnetDBGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: Subnet for RDS DataBases
+      SubnetIds:
+        - !FindInMap [SubnetIds, !Ref Env, SubnetAZA]
+        - !FindInMap [SubnetIds, !Ref Env, SubnetAZB]
+        - !FindInMap [SubnetIds, !Ref Env, SubnetAZC]
+      Tags:
+        - Key: Name
+          Value: !Ref SubnetDBGroupGroupName
+        - Key: env
+          Value: !Ref Env
+        - Key: stack
+          Value: !Sub ${AWS::StackName}
+        - Key: squad
+          Value: !Ref Squad
+
+  RDSDBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: Database Parameter Group
+      Family: postgres16
+      Parameters:
+        shared_preload_libraries: pg_stat_statements
+      Tags:
+        - Key: env
+          Value: !Ref Env
+        - Key: stack
+          Value: !Sub ${AWS::StackName}
+        - Key: Name
+          Value: !Ref DBParameterGroupName
+        - Key: squad
+          Value: !Ref Squad
+
+  RDSPostgre:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      AllocatedStorage: 20
+      DBInstanceClass: db.t4g.micro
+      DBName: !Ref RDSDBName
+      AllowMajorVersionUpgrade: false
+      AutoMinorVersionUpgrade: true
+      BackupRetentionPeriod: 7
+      DBInstanceIdentifier: !Ref InstanceName
+      DBSubnetGroupName: !Ref SubnetDBGroup
+      Engine: postgres
+      EngineVersion: '16.1'
+      MasterUsername: !Ref MasterUserName
+      MasterUserPassword: !Ref MasterUserPasswordName
+      #MasterUserSecret: 
+      #  SecretArn: "arn:aws:secretsmanager:us-east-2:792192516784:secret:992382474575_arch-rds-02-access-ncEwuy:password"
+      MultiAZ: !Ref isMultiAZ
+      Port: 5432
+      PubliclyAccessible: false
+      StorageType: gp3
+      StorageEncrypted: !Ref StorageEncrypted
+      MonitoringInterval: !If [HasEnhancedMonitoring, 60, 0]
+      MonitoringRoleArn: !If [HasEnhancedMonitoring, !GetAtt ['EnhancedMonitoringRole', 'Arn'], !Ref 'AWS::NoValue']
+      DBParameterGroupName: !Ref RDSDBParameterGroup
+      EnablePerformanceInsights: !Ref EnablePerformanceInsights
+      VPCSecurityGroups: 
+        - !Ref SecurityGroupRDS
+      Tags:
+        - Key: env
+          Value: !Ref Env
+        - Key: stack
+          Value: !Sub ${AWS::StackName}
+        - Key: Name
+          Value: !Ref RDSPostgreName
+        - Key: squad
+          Value: !Ref Squad
+        - Key: ssm_automation_start_stop
+          Value: true
+          
+  EnhancedMonitoringRole:
+    Condition: HasEnhancedMonitoring
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: monitoring.rds.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+      Path: "/"
+
+Outputs:
+  RDSPostgre:
+    Description: The RDS instance identifier
+    Value: !Ref RDSPostgre
+    Export:
+      Name: RDSPostgre
