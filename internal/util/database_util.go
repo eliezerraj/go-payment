@@ -49,8 +49,8 @@ func GetDatabaseEnv() core.DatabaseRDS {
 	databaseRDS.User = string(file_user)
 	databaseRDS.Password = string(file_pass)
 
-	databaseRDS.User = "user_tenant_01"
-	databaseRDS.Password = "123456"
+	//databaseRDS.User = "user_tenant_01"
+	//databaseRDS.Password = "123456"
 
 	return databaseRDS
 }
