@@ -17,8 +17,6 @@ import(
 	"go.opentelemetry.io/otel/sdk/resource"
 )
 
-var childLogger = log.With().Str("lib", "instrumentation").Logger()
-
 func Event(span trace.Span, attributeSpan string) {
 	span.AddEvent("Executing SQL query", trace.WithAttributes(attribute.String("db.statement", attributeSpan)))
 }
@@ -34,16 +32,37 @@ func Span(ctx context.Context, spanName string) trace.Span {
 	}*/
 
 	tracer := otel.GetTracerProvider().Tracer("go.opentelemetry.io/otel")
-	_, span := tracer.Start(
-		ctx,
-		spanName,
-		trace.WithSpanKind(trace.SpanKindConsumer),
-		trace.WithAttributes(
-			attribute.String("user_id", cID),
-			attribute.String("request_id", rID)),
+	_, span := tracer.Start(ctx,
+							spanName,
+							trace.WithSpanKind(trace.SpanKindConsumer),
+							trace.WithAttributes(
+									attribute.String("user_id", cID),
+									attribute.String("request_id", rID)),
 	)
 
 	return span
+}
+
+func SpanCtx(ctx context.Context, spanName string) (trace.Span, context.Context) {
+	cID, rID := "unknown", "unknown"
+
+	/*if id, ok := logger.ClientUUID(ctx); ok {
+		cID = id
+	}
+	if id, ok := logger.RequestUUID(ctx); ok {
+		rID = id
+	}*/
+
+	tracer := otel.GetTracerProvider().Tracer("go.opentelemetry.io/otel")
+	ctx, span := tracer.Start(ctx,
+							spanName,
+							trace.WithSpanKind(trace.SpanKindConsumer),
+							trace.WithAttributes(
+									attribute.String("user_id", cID),
+									attribute.String("request_id", rID)),
+	)
+
+	return span, ctx
 }
 
 func Attributes(ctx context.Context, InfoPod *core.InfoPod) []attribute.KeyValue {

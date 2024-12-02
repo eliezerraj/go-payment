@@ -25,7 +25,7 @@ func init(){
 	log.Debug().Msg("init")
 	zerolog.SetGlobalLevel(logLevel)
 	
-	infoPod, server, restEndpoint := util.GetInfoPod()
+	infoPod, server, restEndpoint, awsServiceConfig := util.GetInfoPod()
 	database := util.GetDatabaseEnv()
 	configOTEL := util.GetOtelEnv()
 	caCert := util.GetCaCertEnv()
@@ -38,6 +38,7 @@ func init(){
 	appServer.RestEndpoint = &restEndpoint
 	appServer.RestEndpoint.CaCert = &caCert
 	appServer.ConfigOTEL = &configOTEL
+	appServer.AwsServiceConfig = &awsServiceConfig
 }
 
 func Server(){

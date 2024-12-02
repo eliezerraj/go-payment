@@ -18,7 +18,8 @@ var childLogger = log.With().Str("util", "util").Logger()
 
 func GetInfoPod() (	core.InfoPod,
 					core.Server, 
-					core.RestEndpoint) {
+					core.RestEndpoint,
+					core.AwsServiceConfig) {
 	childLogger.Debug().Msg("GetInfoPod")
 
 	err := godotenv.Load(".env")
@@ -29,6 +30,7 @@ func GetInfoPod() (	core.InfoPod,
 	var infoPod 	core.InfoPod
 	var server		core.Server
 	var restEndpoint core.RestEndpoint
+	var awsServiceConfig core.AwsServiceConfig
 
 	server.ReadTimeout = 60
 	server.WriteTimeout = 60
@@ -66,7 +68,7 @@ func GetInfoPod() (	core.InfoPod,
 	infoPod.OSPID = strconv.Itoa(os.Getpid())
 
 	// Get AZ only if localtest is true
-	if (infoPod.IsAZ == true) {
+	if (infoPod.IsAZ) {
 		cfg, err := config.LoadDefaultConfig(context.TODO())
 		if err != nil {
 			childLogger.Error().Err(err).Msg("ERRO FATAL get Context !!!")
@@ -112,5 +114,15 @@ func GetInfoPod() (	core.InfoPod,
 		restEndpoint.AuthUrlDomain = os.Getenv("AUTH_URL_DOMAIN")
 	}
 
-	return infoPod, server, restEndpoint
+	if os.Getenv("SERVICE_URL_JWT_SA") !=  "" {	
+		awsServiceConfig.ServiceUrlJwtSA = os.Getenv("SERVICE_URL_JWT_SA")
+	}
+	if os.Getenv("SECRET_JWT_SA_CREDENTIAL") !=  "" {	
+		awsServiceConfig.SecretJwtSACredential = os.Getenv("SECRET_JWT_SA_CREDENTIAL")
+	}
+	if os.Getenv("AWS_REGION") !=  "" {
+		awsServiceConfig.AwsRegion = os.Getenv("AWS_REGION")
+	}
+
+	return infoPod, server, restEndpoint, awsServiceConfig
 }

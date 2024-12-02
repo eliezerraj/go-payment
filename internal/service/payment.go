@@ -17,6 +17,7 @@ import (
 )
 
 var childLogger = log.With().Str("service", "service").Logger()
+var restApiCallData core.RestApiCallData
 
 type WorkerService struct {
 	workerRepo		 	*storage.WorkerRepository
@@ -45,20 +46,21 @@ func (s WorkerService) Auth(ctx context.Context, authUser core.AuthUser) (*core.
 	span := lib.Span(ctx, "service.auth")	
 	defer span.End()
 
-	path := s.appServer.RestEndpoint.AuthUrlDomain + "/login"
-	res_interface, err := s.restApiService.CallRestApi(ctx,	"POST",	path, nil ,authUser)
+	restApiCallData.Method = "POST"
+	restApiCallData.Url = s.appServer.RestEndpoint.AuthUrlDomain + "/login"
 
+	rest_interface_acc_from, err := s.restApiService.CallApiRest(ctx, restApiCallData, authUser)
 	if err != nil {
-		span.RecordError(err)
+		childLogger.Error().Err(err).Msg("error CallApiRest /fundBalanceAccount")
 		return nil, err
 	}
-	var auth_user_parsed core.AuthUser
-	err = mapstructure.Decode(res_interface, &auth_user_parsed)
+	jsonString, err  := json.Marshal(rest_interface_acc_from)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
-		span.RecordError(err)
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
-	}
+    }
+	var auth_user_parsed core.AuthUser
+	json.Unmarshal(jsonString, &auth_user_parsed)
 
 	return &auth_user_parsed, nil
 }
@@ -82,7 +84,6 @@ func (s WorkerService) Pay(ctx context.Context, payment *core.Payment) (*core.Pa
 	childLogger.Debug().Msg("Pay")
 	
 	span := lib.Span(ctx, "service.pay")	
-
 	tx, conn, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
 		return nil, err
@@ -108,7 +109,6 @@ func (s WorkerService) Pay(ctx context.Context, payment *core.Payment) (*core.Pa
 	res_interface_card, err := s.workerRepo.GetCard(ctx, &card)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("error workerRepository.GetCard")
-		span.RecordError(err)
 		return nil, err
 	}
 
@@ -138,23 +138,23 @@ func (s WorkerService) Pay(ctx context.Context, payment *core.Payment) (*core.Pa
     }
 
 	// Get Account for Just for Check
-	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/getId/" + strconv.Itoa(card_parsed.FkAccountID)
-	res_interface_acc, err := s.restApiService.CallRestApi(ctx,	"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/getId/" + strconv.Itoa(card_parsed.FkAccountID)
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
 
+	rest_interface_acc_from, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("error restApiService.GetData")
-		span.RecordError(err)
+		childLogger.Error().Err(err).Msg("error CallApiRest /getId/")
 		return nil, err
 	}
+	jsonString, err  := json.Marshal(rest_interface_acc_from)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error Marshal")
+		return nil, errors.New(err.Error())
+    }
 	var account_parsed core.Account
-	jsonString, err := json.Marshal(res_interface_acc)
-	if err != nil {
-		childLogger.Error().Err(err).Msg("Error Marshal")
-		span.RecordError(err)
-		return nil, err
-	}
-
 	json.Unmarshal(jsonString, &account_parsed)
+
 	span.AddEvent("Begin Transaction - lock")
 	
 	payment.FkCardID = card_parsed.ID
@@ -167,20 +167,22 @@ func (s WorkerService) Pay(ctx context.Context, payment *core.Payment) (*core.Pa
 	}
 
 	// Get Fund
-	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + account_parsed.AccountID
-	res_interface_data, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + account_parsed.AccountID
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	res_interface_data, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err
 	}
-
-	var account_balance_parsed core.AccountBalance
-	err = mapstructure.Decode(res_interface_data, &account_balance_parsed)
-    if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
-		span.RecordError(err)
+	jsonString, err = json.Marshal(res_interface_data)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
     }
+	var account_balance_parsed core.AccountBalance
+	json.Unmarshal(jsonString, &account_balance_parsed)
 
 	// Update the status payment
 	if (account_balance_parsed.Amount < payment.Amount) {
@@ -209,7 +211,6 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment *core.Paym
 	childLogger.Debug().Msg("PayWithCheckFraud")
 	
 	span := lib.Span(ctx, "service.payWithCheckFraud")	
-
 	tx, conn, err := s.workerRepo.StartTx(ctx)
 	if err != nil {
 		return nil, err
@@ -263,20 +264,23 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment *core.Paym
     }
 
 	// Get Account for Just for Check
-	path := s.appServer.RestEndpoint.ServiceUrlDomain + "/getId/" + strconv.Itoa(card_parsed.FkAccountID)
-	res_interface_acc, err := s.restApiService.CallRestApi(ctx,	"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/getId/" + strconv.Itoa(card_parsed.FkAccountID)
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	res_interface_acc, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
-		span.RecordError(err)
+		childLogger.Error().Err(err).Msg("error CallApiRest /getId/")
 		return nil, err
 	}
-	var account_parsed core.Account
 	jsonString, err := json.Marshal(res_interface_acc)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("Error Marshal")
-		span.RecordError(err)
-		return nil, err
-	}
+		childLogger.Error().Err(err).Msg("error Marshal")
+		return nil, errors.New(err.Error())
+    }
+	var account_parsed core.Account
 	json.Unmarshal(jsonString, &account_parsed)
+
 	span.AddEvent("Begin Transaction - lock")
 	
 	payment.FkCardID = card_parsed.ID
@@ -289,19 +293,22 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment *core.Paym
 	}
 
 	// Get Fund
-	path = s.appServer.RestEndpoint.ServiceUrlDomain + "/fundBalanceAccount/" + account_parsed.AccountID
-	res_interface_data, err := s.restApiService.CallRestApi(ctx,"GET", path, &s.appServer.RestEndpoint.XApigwId, nil)
+	restApiCallData.Method = "GET"
+	restApiCallData.Url = s.appServer.RestEndpoint.ServiceUrlDomain + "/getId/" + strconv.Itoa(card_parsed.FkAccountID)
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwId
+
+	res_interface_data, err := s.restApiService.CallApiRest(ctx, restApiCallData, nil)
 	if err != nil {
-		span.RecordError(err)
+		childLogger.Error().Err(err).Msg("error CallApiRest /getId/")
 		return nil, err
 	}
-	var account_balance_parsed core.AccountBalance
-	err = mapstructure.Decode(res_interface_data, &account_balance_parsed)
-    if err != nil {
-		childLogger.Error().Err(err).Msg("error parse interface")
-		span.RecordError(err)
+	jsonString, err = json.Marshal(res_interface_data)
+	if err != nil {
+		childLogger.Error().Err(err).Msg("error Marshal")
 		return nil, errors.New(err.Error())
     }
+	var account_balance_parsed core.AccountBalance
+	json.Unmarshal(jsonString, &account_balance_parsed)
 
 	// Get Payment Feature for ML Fraud xgboost Grpc
 	payment_fraud := core.PaymentFraud{}
@@ -355,20 +362,18 @@ func (s WorkerService) PayWithCheckFraud(ctx context.Context, payment *core.Paym
 	res.Fraud = parse_paymentFraud.Fraud
 
 	// Get Payment ML Anomaly
-	path = s.appServer.RestEndpoint.GatewayMlHost + "/payment/anomaly"
-	res_interface_anomaly, err := s.restApiService.CallRestApi(ctx,	"POST",	path, &s.appServer.RestEndpoint.XApigwIdMl,payment_fraud)
-	/*res_interface_anomaly, err := s.restApiService.PostData(ctx, 
-													s.appServer.RestEndpoint.GatewayMlHost,
-													s.appServer.RestEndpoint.ServerHost, 
-													s.appServer.RestEndpoint.XApigwIdMl,
-													"/payment/anomaly", 
-													payment_fraud)*/
+	restApiCallData.Method = "POST"
+	restApiCallData.Url = s.appServer.RestEndpoint.GatewayMlHost + "/payment/anomaly"
+	restApiCallData.X_Api_Id = &s.appServer.RestEndpoint.XApigwIdMl
+
+	res_interface_anomaly, err := s.restApiService.CallApiRest(ctx, restApiCallData, payment_fraud)
 	if err != nil {
-		span.RecordError(err)
+		childLogger.Error().Err(err).Msg("error CallApiRest /getId/")
 		return nil, err
 	}
+
 	childLogger.Debug().Interface("*#########> res_interface_anomaly :", res_interface_anomaly).Msg("")
-	
+
 	jsonString, err = json.Marshal(res_interface_anomaly)
 	if err != nil {
 		childLogger.Error().Err(err).Msg("Error Marshal")
