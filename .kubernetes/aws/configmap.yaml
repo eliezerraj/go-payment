@@ -6,7 +6,7 @@ metadata:
   labels:
     app: *app-name
 data:
-  API_VERSION: "2.1"
+  API_VERSION: "3.0"
   POD_NAME: "go-payment.k8"
   PORT: "5007"
   DB_HOST: "rds-proxy-db-arch-02.proxy-cj4aqa08ettf.us-east-2.rds.amazonaws.com"
@@ -18,18 +18,27 @@ data:
   TLS_ACCOUNT: "false"
   TLS_FRAUD: "false"
   ENV: "dev"
-
   OTEL_EXPORTER_OTLP_ENDPOINT: "arch-eks-02-xray-collector.default.svc.cluster.local:4317"
 
-  SERVICE_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
-  X_APIGW_API_ID: "129t4y8eoj"
+  NAME_SERVICE_01: "go-account"
+  URL_SERVICE_01: "https://vpce.global.dev.caradhras.io/pv/get"
+  METHOD_SERVICE_01: "GET"
+  X_APIGW_API_ID_SERVICE_01: "129t4y8eoj"
 
-  GATEWAY_ML_HOST: "https://vpce.global.dev.caradhras.io/pv"
-  X_APIGW_API_ID_ML_HOST: "3p27io6tsa"
+  NAME_SERVICE_02: "go-account"
+  URL_SERVICE_02: "https://vpce.global.dev.caradhras.io/pv/movimentAccountBalance"
+  METHOD_SERVICE_02: "POST"
+  X_APIGW_API_ID_SERVICE_02: "129t4y8eoj"
 
-  GRPC_HOST: "dns:///go-fraud.architecture.caradhras.io:50052"
-  AUTH_URL_DOMAIN: "https://go-login.architecture.caradhras.io/login"
+  NAME_SERVICE_03: "go-fraud"
+  URL_SERVICE_03: "dns:///go-fraud.architecture.caradhras.io:50052"
 
+  #SERVICE_URL_DOMAIN: "https://vpce.global.dev.caradhras.io/pv"
+  #X_APIGW_API_ID: "129t4y8eoj"
+  #GATEWAY_ML_HOST: "https://vpce.global.dev.caradhras.io/pv"
+  #X_APIGW_API_ID_ML_HOST: "3p27io6tsa"
+  #GRPC_HOST: "dns:///go-fraud.architecture.caradhras.io:50052"
+  #AUTH_URL_DOMAIN: "https://go-login.architecture.caradhras.io/login"
   #SERVER_URL_DOMAIN: "https://go-account.architecture.caradhras.io" #Pulic
   #SERVER_URL_DOMAIN: "https://vpce-svc-acc-908671954593.architecture.caradhras.io" #vpce-03c99f9816dadaef7-s2c9mfvk.vpce-svc-07d64576b83d898d4.us-east-2.vpce.amazonaws.com
   #SERVER_HOST: "go-account.architecture.caradhras.io"
