@@ -15,6 +15,7 @@ import(
 var tracerProvider go_core_observ.TracerProvider
 var apiService go_core_api.ApiService
 
+// About handle/convert http status code
 func errorStatusCode(statusCode int) error{
 	var err error
 	switch statusCode {
@@ -30,6 +31,7 @@ func errorStatusCode(statusCode int) error{
 	return err
 }
 
+// About add a payment
 func (s WorkerService) AddPayment(ctx context.Context, payment *model.Payment) (*model.Payment, error){
 	childLogger.Debug().Msg("AddPayment")
 	childLogger.Debug().Interface("payment: ",payment).Msg("")
@@ -120,6 +122,7 @@ func (s WorkerService) AddPayment(ctx context.Context, payment *model.Payment) (
 	return res, nil
 }
 
+// About get a payment
 func (s WorkerService) GetPayment(ctx context.Context, payment *model.Payment) (*model.Payment, error){
 	childLogger.Debug().Msg("GetPayment")
 	childLogger.Debug().Interface("payment: ",payment).Msg("")

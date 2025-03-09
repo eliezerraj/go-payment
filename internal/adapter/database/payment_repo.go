@@ -30,6 +30,7 @@ func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerR
 	}
 }
 
+// About add payment
 func (w WorkerRepository) AddPayment(ctx context.Context, tx pgx.Tx, payment *model.Payment) (*model.Payment, error){
 	childLogger.Debug().Msg("AddPayment")
 
@@ -81,10 +82,12 @@ func (w WorkerRepository) AddPayment(ctx context.Context, tx pgx.Tx, payment *mo
 		return nil, errors.New(err.Error())
 	}
 
+	// set PK
 	payment.ID = id
 	return payment , nil
 }
 
+// About update payment
 func (w WorkerRepository) UpdatePayment(ctx context.Context, tx pgx.Tx, payment *model.Payment) (int64, error){
 	childLogger.Debug().Msg("UpdatePayment")
 
@@ -107,6 +110,7 @@ func (w WorkerRepository) UpdatePayment(ctx context.Context, tx pgx.Tx, payment 
 	return row.RowsAffected(), nil
 }
 
+// About get payment
 func (w WorkerRepository) GetPayment(ctx context.Context, payment *model.Payment) (*model.Payment, error){
 	childLogger.Debug().Msg("GetPayment")
 	
@@ -175,6 +179,7 @@ func (w WorkerRepository) GetPayment(ctx context.Context, payment *model.Payment
 	return nil, erro.ErrNotFound
 }
 
+// About add card
 func (w WorkerRepository) GetCard(ctx context.Context, card *model.Card) (*model.Card, error){
 	childLogger.Debug().Msg("GetCard")
 	
@@ -239,6 +244,7 @@ func (w WorkerRepository) GetCard(ctx context.Context, card *model.Card) (*model
 	return nil, erro.ErrNotFound
 }
 
+// About get terminal
 func (w WorkerRepository) GetTerminal(ctx context.Context, terminal *model.Terminal) (*model.Terminal, error){
 	childLogger.Debug().Msg("GetTerminal")
 	
@@ -291,6 +297,7 @@ func (w WorkerRepository) GetTerminal(ctx context.Context, terminal *model.Termi
 	return nil, erro.ErrNotFound
 }
 
+// About get payment fraud features
 func (w WorkerRepository) GetPaymentFraudFeature(ctx context.Context, payment *model.Payment) (*model.PaymentFraud, error){
 	childLogger.Debug().Msg("GetPaymentFraudFeature")
 	

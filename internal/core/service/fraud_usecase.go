@@ -30,6 +30,7 @@ func JSONToProto(data string, msg pb.Message) error {
 	return jsonpb.UnmarshalString(data, msg)
 }
 
+// About get gprc server information pod 
 func (s WorkerService) GetInfoPodGrpc(ctx context.Context) (*model.InfoPod, error){
 	childLogger.Debug().Msg("GetInfoPodGrpc")
 
@@ -77,6 +78,7 @@ func (s WorkerService) GetInfoPodGrpc(ctx context.Context) (*model.InfoPod, erro
 	return &infoPod, nil
 }
 
+// About check the fraud score from featrures 
 func (s WorkerService) CheckFeaturePaymentFraudGrpc(ctx context.Context, paymentFraud *model.PaymentFraud) (*model.PaymentFraud, error){
 	childLogger.Debug().Msg("CheckFeaturePaymentFraudGrpc")
 
@@ -148,6 +150,7 @@ func (s WorkerService) CheckFeaturePaymentFraudGrpc(ctx context.Context, payment
 	return &parse_paymentFraud, nil
 }
 
+// About add a payment with fraud score 
 func (s WorkerService) AddPaymentWithCheckFraud(ctx context.Context, payment *model.Payment) (*model.Payment, error){
 	childLogger.Debug().Msg("AddPaymentWithCheckFraud")
 

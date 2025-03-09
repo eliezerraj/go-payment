@@ -37,6 +37,7 @@ func NewHttpAppServer(httpServer *model.Server) HttpServer {
 	return HttpServer{httpServer: httpServer }
 }
 
+// About start http server
 func (h HttpServer) StartHttpAppServer(	ctx context.Context, 
 										httpRouters *api.HttpRouters,
 										appServer *model.AppServer) {
@@ -96,7 +97,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	addPayment.Use(otelmux.Middleware("go-payment"))
 
 	getPayment := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
-	getPayment.HandleFunc("/payment/{id}", core_middleware.MiddleWareErrorHandler(httpRouters.GetPayment))		
+	getPayment.HandleFunc("/get/{id}", core_middleware.MiddleWareErrorHandler(httpRouters.GetPayment))		
 	getPayment.Use(otelmux.Middleware("go-payment"))
 
 	getInfoPodGrpc := myRouter.Methods(http.MethodGet, http.MethodOptions).Subrouter()
@@ -111,6 +112,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 	addPaymentWithCheckFraud.HandleFunc("/paymentWithCheckFraud", core_middleware.MiddleWareErrorHandler(httpRouters.AddPaymentWithCheckFraud))		
 	addPaymentWithCheckFraud.Use(otelmux.Middleware("go-payment"))
 
+	// setup http server
 	srv := http.Server{
 		Addr:         ":" +  strconv.Itoa(h.httpServer.Port),      	
 		Handler:      myRouter,                	          
@@ -121,6 +123,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 
 	childLogger.Info().Str("Service Port : ", strconv.Itoa(h.httpServer.Port)).Msg("Service Port")
 
+	// start http server
 	go func() {
 		err := srv.ListenAndServe()
 		if err != nil {
@@ -128,6 +131,7 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 		}
 	}()
 
+	// handle SIGTERM signals
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	<-ch
@@ -136,5 +140,4 @@ func (h HttpServer) StartHttpAppServer(	ctx context.Context,
 		childLogger.Error().Err(err).Msg("warning dirty shutdown !!!")
 		return
 	}
-
 }

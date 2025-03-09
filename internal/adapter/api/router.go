@@ -101,6 +101,7 @@ func (h *HttpRouters) GetPayment(rw http.ResponseWriter, req *http.Request) erro
 	payment := model.Payment{}
 	payment.ID = varID
 
+	// GetPayment service
 	res, err := h.workerService.GetPayment(req.Context(), &payment)
 	if err != nil {
 		switch err {
@@ -123,6 +124,7 @@ func (h *HttpRouters) GetInfoPodGrpc(rw http.ResponseWriter, req *http.Request) 
 	span := tracerProvider.Span(req.Context(), "adapter.api.GetInfoPodGrpc")
 	defer span.End()
 
+	// GetInfoPodGrpc service
 	res, err := h.workerService.GetInfoPodGrpc(req.Context())
 	if err != nil {
 		switch err {
@@ -145,6 +147,7 @@ func (h *HttpRouters) CheckFeaturePaymentFraudGrpc(rw http.ResponseWriter, req *
 	span := tracerProvider.Span(req.Context(), "adapter.api.CheckFeaturePaymentFraudGrpc")
 	defer span.End()
 
+	// prepare parameter
 	paymentFraud := model.PaymentFraud{}
 	err := json.NewDecoder(req.Body).Decode(&paymentFraud)
     if err != nil {
@@ -152,6 +155,7 @@ func (h *HttpRouters) CheckFeaturePaymentFraudGrpc(rw http.ResponseWriter, req *
 		return  &core_apiError
     }
 
+	// CheckFeaturePaymentFraudGrpc service
 	res, err := h.workerService.CheckFeaturePaymentFraudGrpc(req.Context(), &paymentFraud)
 	if err != nil {
 		switch err {
@@ -174,6 +178,7 @@ func (h *HttpRouters) AddPaymentWithCheckFraud(rw http.ResponseWriter, req *http
 	span := tracerProvider.Span(req.Context(), "adapter.api.AddPaymentWithCheckFraud")
 	defer span.End()
 
+	// prepare parameter
 	payment := model.Payment{}
 	err := json.NewDecoder(req.Body).Decode(&payment)
     if err != nil {
@@ -181,6 +186,7 @@ func (h *HttpRouters) AddPaymentWithCheckFraud(rw http.ResponseWriter, req *http
 		return  &core_apiError
     }
 
+	// AddPaymentWithCheckFraud service
 	res, err := h.workerService.AddPaymentWithCheckFraud(req.Context(), &payment)
 	if err != nil {
 		switch err {
