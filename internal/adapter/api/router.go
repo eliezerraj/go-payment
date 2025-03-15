@@ -63,7 +63,7 @@ func (h *HttpRouters) AddPayment(rw http.ResponseWriter, req *http.Request) erro
 	payment := model.Payment{}
 	err := json.NewDecoder(req.Body).Decode(&payment)
     if err != nil {
-		core_apiError = core_apiError.NewAPIError(erro.ErrUnmarshal, http.StatusBadRequest)
+		core_apiError = core_apiError.NewAPIError(err, http.StatusBadRequest)
 		return &core_apiError
     }
 	defer req.Body.Close()
