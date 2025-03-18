@@ -25,7 +25,7 @@ func StartGrpcClient(host string ) (GrpcClient, error){
 	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`)) // 
 
 	opts = append(opts, grpc.WithInsecure())
-	opts = append(opts, grpc.WithBlock()) // Wait for ready
+	//opts = append(opts, grpc.WithBlock()) // Wait for ready
 	
 	// Dail a server
 	conn, err := grpc.Dial(host, opts...)
