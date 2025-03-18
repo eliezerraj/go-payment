@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "internal/core/proto/pod";
+
+message PodInfo {
+  string ip_address     = 1;
+  string pod_name       = 2;
+  string availability_zone   = 3;
+  string grpc_host      = 4;
+  string version        = 5;
+}
+
+message PodInfoRequest {
+}
+
+message PodInfoResponse {
+  PodInfo podInfo = 1;
+}

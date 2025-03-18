@@ -77,6 +77,11 @@ func main (){
 	grpcClient, err  := client.StartGrpcClient(appServer.ApiService[2].Url)
 	if err != nil {
 		log.Error().Err(err).Msg("Erro connect to grpc server")
+	}
+	// test connection
+	err = grpcClient.TestConnection(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("Erro connect to grpc server")
 	} else {
 		log.Debug().Msg("gprc channel openned sucessfull")
 	}

@@ -1,0 +1,35 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "internal/core/proto/payment";
+
+message Payment {
+    string account_id  = 1;
+    string card_number = 2;
+    string card_type  = 3;
+    string currency = 4;
+    string mcc  = 5;
+    double amount = 6;
+    string status = 7;
+    google.protobuf.Timestamp payment_at = 8;
+    double tx_1d = 9;
+    double avg_1d = 10;
+    double tx_7d = 11;
+    double avg_7d = 12;
+    double tx_30d = 13;
+    double avg_30d = 14;
+    int32 time_btw_cc_tx = 15;
+    double fraud = 16;
+    string card_model  = 17;
+    string terminal_name  = 18;
+    int32 coord_x = 19;
+    int32 coord_y = 20;
+}
+
+message PaymentRequest {
+  Payment payment = 1;
+}
+
+message PaymentResponse {
+  Payment payment = 1;
+}

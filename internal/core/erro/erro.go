@@ -16,4 +16,5 @@ var (
 	ErrHTTPForbiden		= errors.New("forbiden request")
 	ErrInvalid			= errors.New("invalid data")
 	ErrCardTypeInvalid	= errors.New("card type invalid")
+	ErrGRPCConnection	= errors.New("erro connection to grpc server")
 )
