@@ -1,6 +1,7 @@
 package service
 
 import(
+	"fmt"
 	"context"
 	"net/http"
 	"encoding/json"
@@ -38,7 +39,8 @@ func (s WorkerService) AddPayment(ctx context.Context, payment *model.Payment) (
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.AddPayment")
-	
+	trace_id := fmt.Sprintf("%v",ctx.Value("trace-request-id"))
+
 	// get connection
 	tx, conn, err := s.workerRepository.DatabasePGServer.StartTx(ctx)
 	if err != nil {
@@ -91,7 +93,8 @@ func (s WorkerService) AddPayment(ctx context.Context, payment *model.Payment) (
 														s.apiService[1].Url + "/" + res_card.AccountID,
 														s.apiService[1].Method,
 														&s.apiService[1].Header_x_apigw_api_id,
-														nil, 
+														nil,
+														&trace_id,
 														nil)
 	if err != nil {
 		return nil, errorStatusCode(statusCode)

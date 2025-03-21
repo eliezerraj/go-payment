@@ -32,7 +32,7 @@ func NewHttpRouters(workerService *service.WorkerService) HttpRouters {
 
 // About return a health
 func (h *HttpRouters) Health(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Debug().Msg("Health")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Health")
 
 	health := true
 	json.NewEncoder(rw).Encode(health)
@@ -40,7 +40,7 @@ func (h *HttpRouters) Health(rw http.ResponseWriter, req *http.Request) {
 
 // About return a live
 func (h *HttpRouters) Live(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Debug().Msg("Live")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Live")
 
 	live := true
 	json.NewEncoder(rw).Encode(live)
@@ -48,14 +48,14 @@ func (h *HttpRouters) Live(rw http.ResponseWriter, req *http.Request) {
 
 // About show all header received
 func (h *HttpRouters) Header(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Debug().Msg("Header")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Header")
 	
 	json.NewEncoder(rw).Encode(req.Header)
 }
 
 // About add payment
 func (h *HttpRouters) AddPayment(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Debug().Msg("AddPayment")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("AddPayment")
 
 	span := tracerProvider.Span(req.Context(), "adapter.api.AddPayment")
 	defer span.End()
@@ -84,7 +84,7 @@ func (h *HttpRouters) AddPayment(rw http.ResponseWriter, req *http.Request) erro
 
 // About get payment
 func (h *HttpRouters) GetPayment(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Debug().Msg("GetPayment")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("GetPayment")
 
 	// Trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.GetPayment")
@@ -118,7 +118,7 @@ func (h *HttpRouters) GetPayment(rw http.ResponseWriter, req *http.Request) erro
 
 // About get information from a grpc server (pod information)
 func (h *HttpRouters) GetInfoPodGrpc(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Debug().Msg("GetInfoPodGrpc")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("GetInfoPodGrpc")
 
 	// Trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.GetInfoPodGrpc")
@@ -141,7 +141,7 @@ func (h *HttpRouters) GetInfoPodGrpc(rw http.ResponseWriter, req *http.Request) 
 
 // About check the score from payment´s features
 func (h *HttpRouters) CheckFeaturePaymentFraudGrpc(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Debug().Msg("CheckFeaturePaymentFraudGrpc")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("CheckFeaturePaymentFraudGrpc")
 
 	// Trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.CheckFeaturePaymentFraudGrpc")
@@ -172,7 +172,7 @@ func (h *HttpRouters) CheckFeaturePaymentFraudGrpc(rw http.ResponseWriter, req *
 
 // About add a payment with the fraud score
 func (h *HttpRouters) AddPaymentWithCheckFraud(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Debug().Msg("AddPaymentWithCheckFraud")
+	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("AddPaymentWithCheckFraud")
 
 	// Trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.AddPaymentWithCheckFraud")

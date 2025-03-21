@@ -22,7 +22,7 @@ type GrpcClient struct {
 
 // About start a grpc client
 func StartGrpcClient(host string) (GrpcClient, error){
-	childLogger.Debug().Msg("StartGrpcClient")
+	childLogger.Info().Msg("StartGrpcClient")
 
 	// Prepare options
 	var opts []grpc.DialOption
@@ -51,7 +51,7 @@ func StartGrpcClient(host string) (GrpcClient, error){
 
 // About get connection
 func (s GrpcClient) TestConnection(ctx context.Context) (error) {
-	childLogger.Debug().Msg("TestConnection")
+	childLogger.Info().Msg("TestConnection")
 	
 	if (s.GrcpClient == nil){
 		return erro.ErrGRPCConnection
@@ -70,13 +70,13 @@ func (s GrpcClient) TestConnection(ctx context.Context) (error) {
 
 // About get connection
 func (s GrpcClient) GetConnection() (proto.FraudServiceClient) {
-	childLogger.Debug().Msg("GetConnection")
+	childLogger.Info().Msg("GetConnection")
 	return s.ServiceClient
 }
 
 // About close connection
 func (s GrpcClient) CloseConnection() () {
-	childLogger.Debug().Msg("CloseConnection")
+	childLogger.Info().Msg("CloseConnection")
 
 	if err := s.GrcpClient.Close(); err != nil {
 		childLogger.Error().Err(err).Msg("Failed to close gPRC connection")

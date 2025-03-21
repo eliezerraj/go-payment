@@ -5,7 +5,7 @@ go 1.23.3
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.8
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30
-	github.com/eliezerraj/go-core v1.0.35
+	github.com/eliezerraj/go-core v1.0.52
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx/v5 v5.7.2
@@ -15,7 +15,7 @@ require (
 	go.opentelemetry.io/contrib/propagators/aws v1.34.0
 	go.opentelemetry.io/otel v1.35.0
 	google.golang.org/grpc v1.69.4
-	google.golang.org/protobuf v1.36.3
+	google.golang.org/protobuf v1.36.5
 )
 
 require (

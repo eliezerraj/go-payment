@@ -32,7 +32,7 @@ func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerR
 
 // About add payment
 func (w WorkerRepository) AddPayment(ctx context.Context, tx pgx.Tx, payment *model.Payment) (*model.Payment, error){
-	childLogger.Debug().Msg("AddPayment")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddPayment")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.AddPayment")
@@ -89,7 +89,7 @@ func (w WorkerRepository) AddPayment(ctx context.Context, tx pgx.Tx, payment *mo
 
 // About update payment
 func (w WorkerRepository) UpdatePayment(ctx context.Context, tx pgx.Tx, payment *model.Payment) (int64, error){
-	childLogger.Debug().Msg("UpdatePayment")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("UpdatePayment")
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.UpdatePayment")
@@ -112,7 +112,7 @@ func (w WorkerRepository) UpdatePayment(ctx context.Context, tx pgx.Tx, payment 
 
 // About get payment
 func (w WorkerRepository) GetPayment(ctx context.Context, payment *model.Payment) (*model.Payment, error){
-	childLogger.Debug().Msg("GetPayment")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetPayment")
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetPayment")
@@ -181,7 +181,7 @@ func (w WorkerRepository) GetPayment(ctx context.Context, payment *model.Payment
 
 // About add card
 func (w WorkerRepository) GetCard(ctx context.Context, card *model.Card) (*model.Card, error){
-	childLogger.Debug().Msg("GetCard")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetCard")
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetCard")
@@ -246,7 +246,7 @@ func (w WorkerRepository) GetCard(ctx context.Context, card *model.Card) (*model
 
 // About get terminal
 func (w WorkerRepository) GetTerminal(ctx context.Context, terminal *model.Terminal) (*model.Terminal, error){
-	childLogger.Debug().Msg("GetTerminal")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetTerminal")
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetTerminal")
@@ -299,7 +299,7 @@ func (w WorkerRepository) GetTerminal(ctx context.Context, terminal *model.Termi
 
 // About get payment fraud features
 func (w WorkerRepository) GetPaymentFraudFeature(ctx context.Context, payment *model.Payment) (*model.PaymentFraud, error){
-	childLogger.Debug().Msg("GetPaymentFraudFeature")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetPaymentFraudFeature")
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetPaymentFraudFeature")
