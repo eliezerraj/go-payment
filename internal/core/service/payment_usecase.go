@@ -34,8 +34,7 @@ func errorStatusCode(statusCode int) error{
 
 // About add a payment
 func (s WorkerService) AddPayment(ctx context.Context, payment *model.Payment) (*model.Payment, error){
-	childLogger.Debug().Msg("AddPayment")
-	childLogger.Debug().Interface("payment: ",payment).Msg("")
+	childLogger.Info().Str("func","AddPayment").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("payment", payment).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.AddPayment")
@@ -127,8 +126,7 @@ func (s WorkerService) AddPayment(ctx context.Context, payment *model.Payment) (
 
 // About get a payment
 func (s WorkerService) GetPayment(ctx context.Context, payment *model.Payment) (*model.Payment, error){
-	childLogger.Debug().Msg("GetPayment")
-	childLogger.Debug().Interface("payment: ",payment).Msg("")
+	childLogger.Info().Str("func","GetPayment").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("payment", payment).Send()
 
 	span := tracerProvider.Span(ctx, "service.GetPayment")
 	defer span.End()

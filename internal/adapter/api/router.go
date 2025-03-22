@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var childLogger = log.With().Str("adapter", "api.router").Logger()
+var childLogger = log.With().Str("component", "go-payment").Str("package", "internal.adapter.api").Logger()
 
 var core_json coreJson.CoreJson
 var core_apiError coreJson.APIError
@@ -25,6 +25,8 @@ type HttpRouters struct {
 }
 
 func NewHttpRouters(workerService *service.WorkerService) HttpRouters {
+	childLogger.Info().Str("func","NewHttpRouters").Send()
+	
 	return HttpRouters{
 		workerService: workerService,
 	}
@@ -40,7 +42,7 @@ func (h *HttpRouters) Health(rw http.ResponseWriter, req *http.Request) {
 
 // About return a live
 func (h *HttpRouters) Live(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Live")
+	childLogger.Info().Str("func","Live").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	live := true
 	json.NewEncoder(rw).Encode(live)
@@ -48,14 +50,14 @@ func (h *HttpRouters) Live(rw http.ResponseWriter, req *http.Request) {
 
 // About show all header received
 func (h *HttpRouters) Header(rw http.ResponseWriter, req *http.Request) {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("Header")
+	childLogger.Info().Str("func","Header").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 	
 	json.NewEncoder(rw).Encode(req.Header)
 }
 
 // About add payment
 func (h *HttpRouters) AddPayment(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("AddPayment")
+	childLogger.Info().Str("func","AddDebit").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	span := tracerProvider.Span(req.Context(), "adapter.api.AddPayment")
 	defer span.End()
@@ -84,7 +86,7 @@ func (h *HttpRouters) AddPayment(rw http.ResponseWriter, req *http.Request) erro
 
 // About get payment
 func (h *HttpRouters) GetPayment(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("GetPayment")
+	childLogger.Info().Str("func","GetPayment").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	// Trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.GetPayment")
@@ -118,7 +120,7 @@ func (h *HttpRouters) GetPayment(rw http.ResponseWriter, req *http.Request) erro
 
 // About get information from a grpc server (pod information)
 func (h *HttpRouters) GetInfoPodGrpc(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("GetInfoPodGrpc")
+	childLogger.Info().Str("func","GetInfoPodGrpc").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	// Trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.GetInfoPodGrpc")
@@ -141,7 +143,7 @@ func (h *HttpRouters) GetInfoPodGrpc(rw http.ResponseWriter, req *http.Request) 
 
 // About check the score from payment´s features
 func (h *HttpRouters) CheckFeaturePaymentFraudGrpc(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("CheckFeaturePaymentFraudGrpc")
+	childLogger.Info().Str("func","CheckFeaturePaymentFraudGrpc").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	// Trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.CheckFeaturePaymentFraudGrpc")
@@ -172,7 +174,7 @@ func (h *HttpRouters) CheckFeaturePaymentFraudGrpc(rw http.ResponseWriter, req *
 
 // About add a payment with the fraud score
 func (h *HttpRouters) AddPaymentWithCheckFraud(rw http.ResponseWriter, req *http.Request) error {
-	childLogger.Info().Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Msg("AddPaymentWithCheckFraud")
+	childLogger.Info().Str("func","AddPaymentWithCheckFraud").Interface("trace-resquest-id", req.Context().Value("trace-request-id")).Send()
 
 	// Trace
 	span := tracerProvider.Span(req.Context(), "adapter.api.AddPaymentWithCheckFraud")

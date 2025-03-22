@@ -13,7 +13,7 @@ import (
 	proto "github.com/go-payment/internal/adapter/grpc/proto"
 )
 
-var childLogger = log.With().Str("adapter.grpc", "client").Logger()
+var childLogger = log.With().Str("component","go-payment").Str("package","internal.adapter.grpc.client").Logger()
 
 type GrpcClient struct {
 	ServiceClient 	proto.FraudServiceClient
@@ -22,7 +22,7 @@ type GrpcClient struct {
 
 // About start a grpc client
 func StartGrpcClient(host string) (GrpcClient, error){
-	childLogger.Info().Msg("StartGrpcClient")
+	childLogger.Info().Str("func","StartGrpcClient").Send()
 
 	// Prepare options
 	var opts []grpc.DialOption
@@ -41,7 +41,7 @@ func StartGrpcClient(host string) (GrpcClient, error){
 
 	// Create a client
 	serviceClient := proto.NewFraudServiceClient(conn)
-	childLogger.Info().Interface("Grpc Client running : ", serviceClient).Msg("")
+	childLogger.Info().Interface("Grpc Client running", serviceClient).Send()
 
 	return GrpcClient{
 		ServiceClient: serviceClient,
@@ -51,7 +51,7 @@ func StartGrpcClient(host string) (GrpcClient, error){
 
 // About get connection
 func (s GrpcClient) TestConnection(ctx context.Context) (error) {
-	childLogger.Info().Msg("TestConnection")
+	childLogger.Info().Str("func","TestConnection").Send()
 	
 	if (s.GrcpClient == nil){
 		return erro.ErrGRPCConnection
@@ -63,22 +63,23 @@ func (s GrpcClient) TestConnection(ctx context.Context) (error) {
 		return err
 	}
 
-	childLogger.Info().Interface("Grpc Client running : ", res).Msg("")
+	childLogger.Info().Interface("Grpc Client running : ", res).Send()
 
 	return nil
 }
 
 // About get connection
 func (s GrpcClient) GetConnection() (proto.FraudServiceClient) {
-	childLogger.Info().Msg("GetConnection")
+	childLogger.Info().Str("func","GetConnection").Send()
+
 	return s.ServiceClient
 }
 
 // About close connection
 func (s GrpcClient) CloseConnection() () {
-	childLogger.Info().Msg("CloseConnection")
+	childLogger.Info().Str("func","CloseConnection").Send()
 
 	if err := s.GrcpClient.Close(); err != nil {
-		childLogger.Error().Err(err).Msg("Failed to close gPRC connection")
+		childLogger.Error().Err(err).Msg("failed to close gPRC connection")
 	}
 }

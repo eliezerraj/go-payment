@@ -15,15 +15,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var childLogger = log.With().Str("component","go-payment").Str("package","internal.adapter.database").Logger()
+
 var tracerProvider go_core_observ.TracerProvider
-var childLogger = log.With().Str("adapter", "database").Logger()
 
 type WorkerRepository struct {
 	DatabasePGServer *go_core_pg.DatabasePGServer
 }
 
 func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerRepository{
-	childLogger.Debug().Msg("NewWorkerRepository")
+	childLogger.Info().Str("func","NewWorkerRepository").Send()
 
 	return &WorkerRepository{
 		DatabasePGServer: databasePGServer,
@@ -32,7 +33,7 @@ func NewWorkerRepository(databasePGServer *go_core_pg.DatabasePGServer) *WorkerR
 
 // About add payment
 func (w WorkerRepository) AddPayment(ctx context.Context, tx pgx.Tx, payment *model.Payment) (*model.Payment, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddPayment")
+	childLogger.Info().Str("func","AddPayment").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.AddPayment")
@@ -89,7 +90,7 @@ func (w WorkerRepository) AddPayment(ctx context.Context, tx pgx.Tx, payment *mo
 
 // About update payment
 func (w WorkerRepository) UpdatePayment(ctx context.Context, tx pgx.Tx, payment *model.Payment) (int64, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("UpdatePayment")
+	childLogger.Info().Str("func","UpdatePayment").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "database.UpdatePayment")
@@ -112,7 +113,7 @@ func (w WorkerRepository) UpdatePayment(ctx context.Context, tx pgx.Tx, payment 
 
 // About get payment
 func (w WorkerRepository) GetPayment(ctx context.Context, payment *model.Payment) (*model.Payment, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetPayment")
+	childLogger.Info().Str("func","GetPayment").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetPayment")
@@ -181,7 +182,7 @@ func (w WorkerRepository) GetPayment(ctx context.Context, payment *model.Payment
 
 // About add card
 func (w WorkerRepository) GetCard(ctx context.Context, card *model.Card) (*model.Card, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetCard")
+	childLogger.Info().Str("func","GetCard").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetCard")
@@ -246,7 +247,7 @@ func (w WorkerRepository) GetCard(ctx context.Context, card *model.Card) (*model
 
 // About get terminal
 func (w WorkerRepository) GetTerminal(ctx context.Context, terminal *model.Terminal) (*model.Terminal, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetTerminal")
+	childLogger.Info().Str("func","GetTerminal").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetTerminal")
@@ -299,7 +300,7 @@ func (w WorkerRepository) GetTerminal(ctx context.Context, terminal *model.Termi
 
 // About get payment fraud features
 func (w WorkerRepository) GetPaymentFraudFeature(ctx context.Context, payment *model.Payment) (*model.PaymentFraud, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetPaymentFraudFeature")
+	childLogger.Info().Str("func","GetPaymentFraudFeature").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 	
 	// Trace
 	span := tracerProvider.Span(ctx, "database.GetPaymentFraudFeature")

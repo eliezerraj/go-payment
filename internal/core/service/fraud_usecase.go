@@ -34,7 +34,7 @@ func JSONToProto(data string, msg pb.Message) error {
 
 // About get gprc server information pod 
 func (s WorkerService) GetInfoPodGrpc(ctx context.Context) (*model.InfoPod, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("GetInfoPodGrpc")
+	childLogger.Info().Str("func","GetInfoPodGrpc").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.GetInfoPodGrpc")
@@ -54,7 +54,7 @@ func (s WorkerService) GetInfoPodGrpc(ctx context.Context) (*model.InfoPod, erro
 	// request the data from grpc
 	response, err := client.GetPodInfo(ctx, data)
 	if err != nil {
-		childLogger.Error().Err(err).Msg("Error not GetPodInfo")
+		childLogger.Error().Err(err).Msg("rrror not GetPodInfo")
 	  	return nil, err
 	}
 
@@ -85,7 +85,7 @@ func (s WorkerService) GetInfoPodGrpc(ctx context.Context) (*model.InfoPod, erro
 
 // About check the fraud score from featrures 
 func (s WorkerService) CheckFeaturePaymentFraudGrpc(ctx context.Context, paymentFraud *model.PaymentFraud) (*model.PaymentFraud, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("CheckFeaturePaymentFraudGrpc")
+	childLogger.Info().Str("func","CheckFeaturePaymentFraudGrpc").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("paymentFraud", paymentFraud).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.CheckFeaturePaymentFraudGrpc")
@@ -157,7 +157,7 @@ func (s WorkerService) CheckFeaturePaymentFraudGrpc(ctx context.Context, payment
 
 // About add a payment with fraud score 
 func (s WorkerService) AddPaymentWithCheckFraud(ctx context.Context, payment *model.Payment) (*model.Payment, error){
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Msg("AddPaymentWithCheckFraud")
+	childLogger.Info().Str("func","AddPaymentWithCheckFraud").Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("payment", payment).Send()
 
 	// Trace
 	span := tracerProvider.Span(ctx, "service.AddPaymentWithCheckFraud")
@@ -274,7 +274,7 @@ func (s WorkerService) AddPaymentWithCheckFraud(ctx context.Context, payment *mo
 		return nil, errors.New(err.Error())
     }
 
-	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("======>>>>res_svc_fraud :", res_svc_fraud).Msg("")
+	childLogger.Info().Interface("trace-resquest-id", ctx.Value("trace-request-id")).Interface("res_svc_fraud", res_svc_fraud).Send()
 	// set the fraud score
 	payment.Fraud = res_svc_fraud.Fraud
 
